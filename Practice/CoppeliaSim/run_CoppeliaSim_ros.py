@@ -9,7 +9,6 @@ import math
 import sys
 
 sys.path.insert(0 , '/home/jee/catkin_ws/src/RISE_Lab/Library/CoppeliaSim_Lib')
-
 from vrepsim import VrepSimulation
 
 from moveit_msgs.msg import DisplayTrajectory
@@ -54,7 +53,6 @@ class SingleIndy:
             
             #remaining joint path points
             print "Notice: {} joint positions left.".format(len(self.jointPositions))
-            self.jointPositions.pop(0)
 
             # goal position is in [0,2*pi)
             
@@ -63,7 +61,7 @@ class SingleIndy:
 
             threshold = 0.2
 
-            # iterate for all joints
+            # iterate for all joints (syncronise Ros to Coppeliasim)
             for n, p in enumerate(goal_pos,0):
                 # check the error is in threshold boundary
                 self.vrep.set_joint_target_position('joint%d' % n, goal_pos[n])
@@ -74,9 +72,7 @@ class SingleIndy:
                     print "    current pos[{}] : {}".format(n,self.cur_pos[n])
                     print "    goal    pos[{}] : {}".format(n,p)
             '''
-            
-
-            rate.sleep()
+           rate.sleep()
 
             
             

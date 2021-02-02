@@ -52,9 +52,9 @@ class PointCloud_Shape_Cube(PointCloud_Shape):
         for i in range(lim):
             for j in range(lim):
                 for k in range(lim):
-                    x = float(i) / lim
-                    y = float(j) / lim
-                    z = float(k) / lim
+                    x = float(i) / 4
+                    y = float(j) / 4
+                    z = float(k) / 4
                     
                     Pt_xyz = [x, y, z]
 
@@ -162,9 +162,6 @@ class Ellipse(PointCloud_Shape):
         time.sleep(0.5)
         self.pcl_pub_xyz(Point_xyz)
 
-
-
-
 ### Main Code ###
 rospy.init_node('make_point_cloud')
 Color_cube = PointCloud_Shape_ColorCube()
@@ -174,9 +171,9 @@ Ellip = Ellipse(120,60,1)
 
 while not rospy.is_shutdown():
     try:
-        #Cube.make_point()
+        Cube.make_point()
         #Color_cube.make_point()
-        Sphere_part.make_point()
+        #Sphere_part.make_point()
         #Ellip.make_point()
 
     except rospy.ROSInterruptException:
