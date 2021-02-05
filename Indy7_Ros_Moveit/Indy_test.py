@@ -30,4 +30,8 @@ indy.connect()
 status = indy.get_robot_status()
 print(status)
 
+indy.go_home()
+
+print(indy.get_joint_pos())
+
 indy.disconnect()

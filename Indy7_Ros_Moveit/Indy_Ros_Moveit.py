@@ -28,85 +28,66 @@ indy = client.IndyDCPClient(robot_ip, name)
 class SingleIndy:
     def __init__(self):
         rospy.Subscriber("/move_group/display_planned_path", DisplayTrajectory, self.moveit_cb)#this obtain each joint pos
-        self.jointPositions = []
-        self.jointpoints = []
+        self.ros_msg_joint_points = []
+        self.indy7_joint_points = []
         
     def moveit_cb(self, data):
         jointPoints = data.trajectory[0].joint_trajectory.points #joint pos msg
         for msg in jointPoints:
-            self.jointPositions.append(msg.positions) #joint pos list
+            self.ros_msg_joint_points.append(msg.positions) #joint pos list
 
-    def run_indy7(self):
+    def run_indy7(self, vel, blend):
 
         rate = rospy.Rate(10)
         
         while not rospy.is_shutdown():
             
-            if len(self.jointPositions) == 0:
-                continue
+            if len(self.ros_msg_joint_points) == 0:
+                pass
+                #print 'moveit set initialize'
+            
+            else:
+                indy.connect()
 
-            indy.connect()
+                self.set_joint_unit()
 
-            vel = 5
-            blend = 20
+                traj = JsonProgramComponent(policy=1, resume_time=3)
 
-            traj = JsonProgramComponent(policy=1, resume_time=3)
+                for i in range(len(self.ros_msg_joint_points)):
+                    traj.add_joint_move_to(self.indy7_joint_points[i], vel=vel, blend=blend)
 
-            self.set_joint_unit()
+                traj_json = traj.program_done()
+                indy.set_and_start_json_program(traj_json)
+            
+                indy.disconnect()
 
-            for i in range(len(self.jointPositions)):
-                traj.add_joint_move_to(self.jointpoints[i], vel=vel, blend=blend)
+                print self.indy7_joint_points
 
-            traj_json = traj.program_done()
-
-            indy.set_and_start_json_program(traj_json)
-        
-            indy.disconnect()
-
-            del self.jointpoints[:]
-            del self.jointPositions[:]
-
-    def home_pos(self):
-        indy.connect()
-        indy.go_home()
-        indy.disconnect()
+                del self.indy7_joint_points[:]
+                del self.ros_msg_joint_points[:]
 
     def set_joint_unit(self):
         temp_jointpoints = []
-        for position in self.jointPositions:
-            for i, n in enumerate(position):
+        for point in self.ros_msg_joint_points:
+            for i, n in enumerate(point):
                 temp_jointpoints.append(np.rad2deg(n))
-            self.jointpoints.append(temp_jointpoints)
+            self.indy7_joint_points.append(temp_jointpoints)
             temp_jointpoints = []
 
-        print type(self.jointpoints)
-
-        # temp_point = self.jointpoints
-
-        # print temp_point
-        # print list(temp_point)
-        # print type(temp_point)
-    
-    def test(self):
-        a=[9,8,7,6,5,4,3,2,1]
-        for i, n in enumerate(a):
-           print i, n
-           a[i] = np.rad2deg(n)
-        print type(a)
 
 if __name__ == "__main__":
     rospy.init_node('main')
     SI = SingleIndy()
-    while not SI.jointPositions:
+    while not SI.ros_msg_joint_points:
         try:
             pass
         except rospy.ROSInterruptException:
             pass
 
-    if SI.jointPositions:
+    if SI.ros_msg_joint_points:
         # SI.test()
         # SI.set_joint_unit()
-        SI.run_indy7()
+        SI.run_indy7(5, 20)
         # SI.home_pos()
 
 
