@@ -29,9 +29,13 @@ indy.connect()
 
 status = indy.get_robot_status()
 print(status)
+print status['ready']
 
-indy.go_home()
+#indy.go_home()
+
+# indy.joint_move_to([-13.324600093621745, -63.47151322798713, -52.05036257909693, 0.0007614286819307433, -64.3780880163254, -13.362583878017588])
 
 print(indy.get_joint_pos())
+print(indy.get_task_pos())
 
 indy.disconnect()

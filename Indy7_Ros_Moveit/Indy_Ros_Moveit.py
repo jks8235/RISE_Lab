@@ -15,6 +15,7 @@ import math
 
 from moveit_msgs.msg import DisplayTrajectory
 
+### indy7 set up ###
 # Set robot (server) IP 
 robot_ip = "10.201.159.232"  # Robot (Indy) IP
 
@@ -25,19 +26,24 @@ name = "NRMK-Indy7"  # Robot name (Indy7)
 # Create class object
 indy = client.IndyDCPClient(robot_ip, name)
 
+### robot move class
 class SingleIndy:
     def __init__(self):
+        # initialize moving point and ros subscriber setting
         rospy.Subscriber("/move_group/display_planned_path", DisplayTrajectory, self.moveit_cb)#this obtain each joint pos
         self.ros_msg_joint_points = []
         self.indy7_joint_points = []
         
+    # ros moveit call back setting
     def moveit_cb(self, data):
         jointPoints = data.trajectory[0].joint_trajectory.points #joint pos msg
         for msg in jointPoints:
             self.ros_msg_joint_points.append(msg.positions) #joint pos list
 
+    # indy7 moving
+    # para vel : int type;
+    # para blend : int type;
     def run_indy7(self, vel, blend):
-
         rate = rospy.Rate(10)
         
         while not rospy.is_shutdown():
@@ -66,6 +72,10 @@ class SingleIndy:
                 del self.indy7_joint_points[:]
                 del self.ros_msg_joint_points[:]
 
+    ### change joint coordinate
+    """
+    indy7은 deg, ros는 rad을 사용하므로 단위 변환
+    """
     def set_joint_unit(self):
         temp_jointpoints = []
         for point in self.ros_msg_joint_points:
