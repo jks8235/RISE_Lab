@@ -500,11 +500,10 @@ class JsonProgramComponent:
         self.add_joint_move(q)
 
     def add_joint_move_by(self, q, vel=3, blend=5):
-        # self.set_velocity(vel)
-        # self.set_joint_blend(blend)
-        # self.set_joint_move_as_rel()
-        # self.add_joint_move(q)
-        pass
+        self.set_velocity(vel)
+        self.set_joint_blend(blend)
+        self.set_joint_move_as_rel()
+        self.add_joint_move(q)
 
     def add_task_move_to(self, p, vel=3, blend=0.05):
         self.set_velocity(vel)
