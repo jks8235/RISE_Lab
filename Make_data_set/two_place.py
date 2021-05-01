@@ -25,19 +25,13 @@ class ToF_Sensor:
         off_set = np.mean(self.FOV_distance_multiplier) - 1
         self.FOV_distance_multiplier = self.FOV_distance_multiplier - off_set*np.ones(self.FOV_distance_multiplier.shape)
 
-    def set_map(self, distance, shape):
+    def set_map(self, distance):
         self.distance = distance
-        
-        if shape == 'edge':
-            self.Map_size = 800
-            self.Map = np.zeros([self.Map_size, self.Map_size])
-            self.Map[:int(self.Map_size/2),:] = self.distance[0]
-            self.Map[int(self.Map_size/2):,:] = self.distance[1]
-        elif shape == 'conner':
-            self.Map_size = 880
-            self.Map = np.zeros([self.Map_size, self.Map_size])
-            self.Map[:int(self.Map_size/2),:] = self.distance[0]
-            self.Map[:int(self.Map_size/2),:int(self.Map_size/2)] = self.distance[1]
+
+        self.Map_size = 880
+        self.Map = np.zeros([self.Map_size, self.Map_size])
+        self.Map[:int(self.Map_size/2),:] = self.distance[0]
+        self.Map[:int(self.Map_size/2),:int(self.Map_size/2)] = self.distance[1]
 
         self.set_start()
         
@@ -68,114 +62,110 @@ class ToF_Sensor:
         y_s = self.Map.shape[1]/2
         z_s = 0
 
-        self.Move_range = [[400-r_max, 400+r_max], [400-r_max, 400+r_max], [max(self.distance[0], self.distance[1])-850, max(self.distance[0], self.distance[1])-50]]
+        self.Move_range = [[self.Map_size/2-r_max, self.Map_size/2+r_max], [self.Map_size/2-r_max, self.Map_size/2+r_max], [max(self.distance[0], self.distance[1])-850, max(self.distance[0], self.distance[1])-50]]
         self.Position = [x_s, y_s, z_s]
 
 def save_data_as_csv(data, name):
     path = '/home/jee/catkin_ws/src/RISE_Lab/Make_data_set/data/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
-def make_data(sensor, shape, d_resolution, move_resolution):
+def make_data(sensor, d_resolution, move_resolution):
 
-    NN_input = []
-    NN_verify = []
-    NN_output = []
+    input_data = []
+    verify_data = []
+    output_data = []
 
-    if shape == 'conner':
-        for d_1 in range(50, 851, d_resolution):
-            for d_2 in range(50, 851,  d_resolution):
-                d = [d_1, d_2]
-                sensor.set_map(d, shape)
+    for d_1 in range(50, 851, d_resolution):
+        for d_2 in range(50, 851,  d_resolution):
+            d = [d_1, d_2]
+            sensor.set_map(d)
+    
+            for x in range(sensor.Move_range[0][0], sensor.Move_range[0][1], move_resolution):
+                for y in range(sensor.Move_range[1][0], sensor.Move_range[1][1], move_resolution):
+                    FOV_1 = sensor.get_FOV_distance([x, y, 0])
+                    distance_1 = sensor.get_distance()
+
+                    move_distance = 20
+
+                    for delta_x in range(-move_distance, move_distance+1, 10):
+                        for delta_y in range(-(move_distance-abs(delta_x)), (move_distance-abs(delta_x))+1, 10):
+                            for delta_z in range(-(move_distance-abs(delta_x)-abs(delta_y)), (move_distance-abs(delta_x)-abs(delta_y))+1, 10):
+                                FOV_2 = sensor.get_FOV_distance([x+delta_x, y+delta_y, 0+delta_z])
+                                distance_2 = sensor.get_distance()
+
+                                temp_input = [delta_x, delta_y, delta_z, distance_1, distance_2]
+                                temp_verify = []
+                                temp_output = [distance_2]
+
+                                for i in range(0, sensor.resolution):
+                                    for j in range(0, sensor.resolution):
+                                        temp_verify.append(FOV_2[j, sensor.resolution-i-1])
+
+                                input_data.append(temp_input)
+                                verify_data.append(temp_verify)
+                                output_data.append(temp_output)
+
+            print(d_1, d_2)
+
+    Total_data = np.concatenate([input_data, verify_data, output_data], axis=1)
+    pd_Total = pd.DataFrame(Total_data)
+
+    print pd_Total.shape
+
+    return pd_Total
+
+def make_fold(pd_data, fold_num):
+
+    DataNo = pd_data.shape[0]
+    input_FeatNo = 5
+    verify_FeatNo = 25 + input_FeatNo
+    output_FeatNo = 1 + verify_FeatNo
+    FoldDataNo = int(DataNo/fold_num)
+
+    total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
+    total_data = total_data.T
+
+    print(total_data.shape)
+
+    ## Validation Data set ##
+    for i in range(fold_num):
         
-                for x in range(sensor.Move_range[0][0], sensor.Move_range[0][1], move_resolution):
-                    for y in range(sensor.Move_range[1][0], sensor.Move_range[1][1], move_resolution):
-                        for z in range(sensor.Move_range[2][0], sensor.Move_range[2][1], 2*move_resolution):
-                            FOV_1 = sensor.get_FOV_distance([x, y, z])
-                            distance_1 = sensor.get_distance()
-
-                            move_distance = 20
-
-                            for delta_x in range(-move_distance, move_distance+1, 10):
-                                for delta_y in range(-(move_distance-abs(delta_x)), (move_distance-abs(delta_x))+1, 10):
-                                    for delta_z in range(-(move_distance-abs(delta_x)-abs(delta_y)), (move_distance-abs(delta_x)-abs(delta_y))+1, 10):
-                                        FOV_2 = sensor.get_FOV_distance([x+delta_x, y+delta_y, z+delta_z])
-                                        distance_2 = sensor.get_distance()
-
-                                        temp_input = [delta_x, delta_y, delta_z, distance_1, distance_2]
-                                        temp_verify = []
-                                        temp_output = [distance_2]
-
-                                        for i in range(0, sensor.resolution):
-                                            for j in range(0, sensor.resolution):
-                                                temp_verify.append(FOV_2[j, sensor.resolution-i-1])
-
-                                        NN_input.append(temp_input)
-                                        NN_verify.append(temp_verify)
-                                        NN_output.append(temp_output)
-
-                            print(d_1, d_2, x, y, z)
-
-    elif shape == 'edge':
-        for d_1 in range(50, 851, d_resolution):
-            for d_2 in range(50, 851,  d_resolution):
-                d = [d_1, d_2]
-                sensor.set_map(d, shape)
+        temp_input_Valid = total_data.iloc[:input_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
+        temp_verify_Valid = total_data.iloc[input_FeatNo:verify_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
+        temp_output_Valid = total_data.iloc[verify_FeatNo:output_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
         
-                for x in range(sensor.Move_range[0][0], sensor.Move_range[0][1], move_resolution):
-                    for y in range(sensor.Move_range[1][0], sensor.Move_range[1][1], move_resolution):
-                        FOV_1 = sensor.get_FOV_distance([x, y, 0])
-                        distance_1 = sensor.get_distance()
+        launch_1 = 'input_Fold%d = temp_input_Valid'%(i+1)
+        launch_2 = 'verify_Fold%d = temp_verify_Valid'%(i+1)
+        launch_3 = 'output_Fold%d = temp_output_Valid'%(i+1)
 
-                        move_distance = 20
+        exec(launch_1)
+        exec(launch_2)
+        exec(launch_3)
 
-                        for delta_x in range(-move_distance, move_distance+1, 10):
-                            for delta_y in range(-(move_distance-abs(delta_x)), (move_distance-abs(delta_x))+1, 10):
-                                for delta_z in range(-(move_distance-abs(delta_x)-abs(delta_y)), (move_distance-abs(delta_x)-abs(delta_y))+1, 10):
-                                    FOV_2 = sensor.get_FOV_distance([x+delta_x, y+delta_y, 0+delta_z])
-                                    distance_2 = sensor.get_distance()
+    # print(Validation_input_Fold1.shape)
+    # print(Validation_verify_Fold1.shape)
+    # print(Validation_output_Fold1.shape)
 
-                                    temp_input = [delta_x, delta_y, delta_z, distance_1, distance_2]
-                                    temp_verify = []
-                                    temp_output = [distance_2]
+    print('fold data done')
 
-                                    for i in range(0, sensor.resolution):
-                                        for j in range(0, sensor.resolution):
-                                            temp_verify.append(FOV_2[j, sensor.resolution-i-1])
+    for i in range(0, fold_num):
 
-                                    NN_input.append(temp_input)
-                                    NN_verify.append(temp_verify)
-                                    NN_output.append(temp_output)
+        launch_1 = 'save_data_as_csv(input_Fold%d, \'input_Fold_%d\')'%(i+1,i+1)
+        launch_2 = 'save_data_as_csv(verify_Fold%d, \'verify_Fold_%d\')'%(i+1,i+1)
+        launch_3 = 'save_data_as_csv(output_Fold%d, \'output_Fold_%d\')'%(i+1,i+1)
+        
+        exec(launch_1)
+        exec(launch_2)
+        exec(launch_3)
 
-                        print(d_1, d_2, x, y)
+        print(i+1)
 
-    pd_input = pd.DataFrame(NN_input)
-    pd_verify = pd.DataFrame(NN_verify)
-    pd_output = pd.DataFrame(NN_output)
-
-    print pd_input.shape
-    print pd_verify.shape
-    print pd_output.shape
-
-    data_num = 500000
-    number = pd.DataFrame(NN_input).shape[0]/data_num
-    print number
-
-    for n in range(0, number+1):
-        temp_save_input = pd_input.iloc[n*data_num:(n+1)*data_num,:]
-        temp_save_veiry = pd_verify.iloc[n*data_num:(n+1)*data_num,:]
-        temp_save_output = pd_output.iloc[n*data_num:(n+1)*data_num,:]
-
-        save_data_as_csv(temp_save_input, shape + '_input_' + str((n+1)))
-        save_data_as_csv(temp_save_veiry, shape + '_verify_' + str((n+1)))
-        save_data_as_csv(temp_save_output, shape + '_output_' + str((n+1)))
-
-    print (shape + 'done')
+    print ('Save data done')
 
 if __name__ == "__main__":
 
     sensor = ToF_Sensor()
 
-    make_data(sensor, 'edge', 100, 20)
-    make_data(sensor, 'conner', 100, 20)
+    total_data = make_data(sensor, 50, 20)
 
-    print('all done')
+    fold_data = make_fold(total_data, 25)
