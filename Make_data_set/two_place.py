@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# author: Kyungsub Jee (RISE)
+
 import numpy as np
 import math
 import pandas as pd

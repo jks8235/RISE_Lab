@@ -49,7 +49,7 @@ class VrepSimulation():
             err, pose = vrep.simxGetJointPosition(
                 self.client_id,
                 self.handles[objname],
-                vrep.simx_opmode_oneshot)
+                vrep.simx_opmode_oneshot_wait)
         return pose
 
     def get_joint_velocity(self, objname):
@@ -61,7 +61,7 @@ class VrepSimulation():
             err,lin_vel,ang_vel=vrep.simxGetObjectVelocity(
                 self.client_id,
                 self.hendles[objname],
-                vrep.simx_opmode_oneshot
+                vrep.simx_opmode_oneshot_wait
             )
         return ang_vel
 
@@ -73,7 +73,7 @@ class VrepSimulation():
                 self.client_id,
                 self.handles[objname],
                 -1,
-                vrep.simx_opmode_oneshot)
+                vrep.simx_opmode_oneshot_wait)
         return pose
 
     def get_object_quaternion(self, objname):
@@ -84,7 +84,7 @@ class VrepSimulation():
                 self.client_id,
                 self.handles[objname],
                 -1,
-                vrep.simx_opmode_oneshot)
+                vrep.simx_opmode_oneshot_wait)
         return quaternion
     
     ###############
@@ -93,14 +93,14 @@ class VrepSimulation():
             self.client_id,
             self.handles[objname],
             radian,
-            vrep.simx_opmode_oneshot)
+            vrep.simx_opmode_oneshot_wait)
 
     def set_joint_target_position(self, objname, radian):
         vrep.simxSetJointTargetPosition(
             self.client_id,
             self.handles[objname],
             radian,
-            vrep.simx_opmode_oneshot)     
+            vrep.simx_opmode_oneshot_wait)     
 
     def get_sona_data(self, objname):
         err = vrep.simx_return_remote_error_flag
@@ -112,7 +112,7 @@ class VrepSimulation():
             err, dtc_state, dtc_point, dtc_obj_hendle, dtc_ser_vec = vrep.simxReadProximitySensor(
                 self.client_id,
                 self.handles[objname],
-                vrep.simx_opmode_oneshot)
+                vrep.simx_opmode_oneshot_wait)
         return dtc_point#,force
     ##############
     
@@ -123,14 +123,22 @@ class VrepSimulation():
              self.client_id,
              self.handles[objname],
              newton, 
-             vrep.simx_opmode_oneshot)
+             vrep.simx_opmode_oneshot_wait)
          
     def set_joint_target_velocity(self, objname, rad_per_sec):
          vrep.simxSetJointTargetVelocity(
              self.client_id,
              self.handles[objname],
              rad_per_sec,
-             vrep.simx_opmode_oneshot)
+             vrep.simx_opmode_oneshot_wait)
+
+    def set_object_target_position(self, objname, position):
+        vrep.simxSetObjectPosition(
+            self.client_id,
+            self.handles[objname],
+            -1,
+            position,
+            vrep.simx_opmode_oneshot_wait)
 
     def set_communication_pause(self):
         vrep.simxPauseCommunication(self.client_id, True)
@@ -189,7 +197,7 @@ class VrepSimulation():
         err = vrep.simx_return_timeout_flag
         t = time.time()
         while (err != vrep.simx_return_ok) and (not rospy.is_shutdown()):
-            err = func(self.client_id, vrep.simx_opmode_oneshot)
+            err = func(self.client_id, vrep.simx_opmode_oneshot_wait)
             if (time.time() - t) > self.__TIME_OUT:
                 raise RuntimeError
 
