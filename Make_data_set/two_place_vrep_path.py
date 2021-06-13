@@ -53,7 +53,7 @@ class sensor_bundle():
         self.bundle_Pose = [0.0, 0.0, 0.45]
         # self.bundle_Rolling = [0.0, 0.0, 0.0]
         # self.bundle_Position = self.bundle_Pose + self.bundle_Rolling
-        self.Step_size = 0.01
+        self.Step_size = 0.02
 
         self.sensor_name = []
         self.sensor_obj = []
@@ -86,7 +86,7 @@ class sensor_bundle():
     def Set_Object_Position(self, objname, position):
         self.vrep.set_object_target_position(objname, position)
 
-    def random_step(self, Pose, iter=1):
+    def random_step(self, Pose):
 
         random_ratio = [random.randrange(-100,101), random.randrange(-100,101), random.randrange(-100,101)]
         del_position = scaling(random_ratio)
@@ -99,12 +99,26 @@ class sensor_bundle():
 
         return Pose
 
+    def fixed_step(self, Pose, Direction):
+
+        direction_ratio = Direction
+        del_position = scaling(direction_ratio)
+
+        Pose = [round((i + j*self.Step_size),5) for i, j in zip(Pose, del_position)]
+
+        print(direction_ratio)
+        print(del_position)
+        print(Pose)
+
+        return Pose
+
     def Run(self):
         if self.vrep.is_not_ready:
             raise NotImplementedError
         else:
             self.vrep.start_simulation()
-            self.Work()
+            # self.Fixed_Work()
+            self.Random_Work()
             self.vrep.stop_simulation()
 
     def Get_Bundle_MoveRange(self, resolution = 2):
@@ -124,7 +138,7 @@ class sensor_bundle():
 
         return y_range, z_range
                                                                      
-    def Work(self):
+    def Random_Work(self):
 
         input_data = []
         output_data = []
@@ -182,6 +196,72 @@ class sensor_bundle():
 
         make_fold(pd_Total,1)
 
+    # def Fixed_Work(self):
+
+    #         input_data = []
+    #         output_data = []
+
+    #         iter = 0
+    #         wall_resolution = 20
+
+    #         Long_Wall_Range = range(-80,-30+1,wall_resolution)
+    #         for d_long in Long_Wall_Range:
+    #             Short_Wall_Range = range(d_long+wall_resolution,-20+1,wall_resolution)
+    #             for d_short in Short_Wall_Range:
+
+    #                 self.Set_Object_Position('ConcretBlock2',[float(d_long)/100, 0.0, 0.45])
+    #                 self.Set_Object_Position('ConcretBlock1',[float(d_short)/100, 0.225, 0.225])
+    #                 # print(d_long, d_short)
+        
+    #                 y_range, z_range = self.Get_Bundle_MoveRange(5)
+
+    #                 for y in y_range:
+    #                     for z in z_range:
+
+    #                         move_distance = 2
+                    
+    #                         for delta_x in range(-move_distance, move_distance+1, 1):
+    #                             for delta_y in range(-(move_distance-abs(delta_x)), (move_distance-abs(delta_x))+1, 1):
+    #                                 for delta_z in range(-(move_distance-abs(delta_x)-abs(delta_y)), (move_distance-abs(delta_x)-abs(delta_y))+1, 1):
+
+    #                                     direction = [delta_x, delta_y, delta_z]
+
+    #                                     print(direction)
+    #                                     bundle_position = [0.0, float(y)/100, float(z)/100]
+    #                                     distance = np.mean(self.Get_Sensor_Data())
+
+    #                                     temp_input = bundle_position + [distance]
+                                        
+    #                                     step_num = 19
+
+    #                                     for step in range(step_num):
+    #                                         bundle_position = self.fixed_step(bundle_position, direction)
+
+    #                                         self.Set_Object_Position('sensor_bundle', bundle_position)
+    #                                         distance = np.mean(self.Get_Sensor_Data())
+
+    #                                         temp_input = temp_input + bundle_position + [distance]
+
+    #                                         print('step %d'%(step+1))
+
+    #                                     temp_output = self.Get_Sensor_Data()
+    #                                     input_data.append(temp_input)
+    #                                     output_data.append(temp_output)
+                                    
+    #                                     iter += 1
+    #                                     print(iter)
+    #                                     print('input : ', len(temp_input), temp_input)
+    #                                     print('output : ', len(temp_output), temp_output)
+
+
+    #         print(input_data)
+    #         print(output_data)
+
+    #         Total_data = np.concatenate([input_data, output_data], axis=1)
+    #         pd_Total = pd.DataFrame(Total_data)
+
+    #         make_fold(pd_Total,1)
+
 def deg2rad(deg):
     return deg/180.0*math.pi
 
@@ -198,7 +278,7 @@ def make_fold(pd_data, fold_num):
 
     total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
     total_data = total_data.T
-
+    
     print(total_data.shape)
 
     ## Validation Data set ##
@@ -221,8 +301,8 @@ def make_fold(pd_data, fold_num):
 
     for i in range(0, fold_num):
 
-        launch_1 = 'save_data_as_csv(input_Fold%d, \'path_input_Fold_%d\')'%(i+1,i+1)
-        launch_2 = 'save_data_as_csv(output_Fold%d, \'path_output_Fold_%d\')'%(i+1,i+1)
+        launch_1 = 'save_data_as_csv(input_Fold%d, \'Fixed_path_input_Fold_%d\')'%(i+1,i+1)
+        launch_2 = 'save_data_as_csv(output_Fold%d, \'Fixed_path_output_Fold_%d\')'%(i+1,i+1)
         
         exec(launch_1)
         exec(launch_2)
