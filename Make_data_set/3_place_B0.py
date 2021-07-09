@@ -74,8 +74,8 @@ class VrepObjectStateBridge(object):
             self.object_state_pub_topics[name] = self.client.simxCreatePublisher(True)
 
     def excute_pose(self, pose):
-        wall_1_pos = [pose[0], pose[1], 1.0]
-        wall_3_pos = [pose[2], pose[3], pose[4]]
+        wall_1_pos = [pose[0], pose[1], pose[2]]
+        wall_3_pos = [pose[3], pose[4], pose[5]]
 
         self.client.simxSetObjectPosition(self.obj_handles["ConcretBlock1"], -1, wall_1_pos, self.object_state_pub_topics["ConcretBlock1"])
         self.client.simxSetObjectPosition(self.obj_handles["ConcretBlock3"], -1, wall_3_pos, self.object_state_pub_topics["ConcretBlock3"])
@@ -86,8 +86,9 @@ class VrepDistanceSensorBridge(object):
         self.client = client
         self.obj_handles = obj_handles
         self.sensor_names = sensor_names
-        self.default_distance = 0.0
+        self.default_distance = 0.9
         self.FOV_distance = [self.default_distance for i in range(len(self.sensor_names))]
+        self.FOV_object_check = [0 for i in range(len(self.sensor_names))]
         self.pos = []
 
         # create vrep B0 subscriber function
@@ -126,104 +127,138 @@ class VrepDistanceSensorBridge(object):
     def _distance_cb_1(self, msg):
         if msg[1] == 1:
             self.FOV_distance[0] = msg[2]
+            self.FOV_object_check[0] = 1
         else:
             self.FOV_distance[0] = self.default_distance
+            self.FOV_object_check[0] = 0
             
     def _distance_cb_2(self, msg):
         if msg[1] == 1:
             self.FOV_distance[1] = msg[2]
+            self.FOV_object_check[1] = 1
         else:
             self.FOV_distance[1] = self.default_distance
+            self.FOV_object_check[1] = 0
             
     def _distance_cb_3(self, msg):
         if msg[1] == 1:
             self.FOV_distance[2] = msg[2]
+            self.FOV_object_check[2] = 1
         else:
             self.FOV_distance[2] = self.default_distance
+            self.FOV_object_check[2] = 0
             
     def _distance_cb_4(self, msg):
         if msg[1] == 1:
             self.FOV_distance[3] = msg[2]
+            self.FOV_object_check[3] = 1
         else:
             self.FOV_distance[3] = self.default_distance
+            self.FOV_object_check[3] = 0
             
     def _distance_cb_5(self, msg):
         if msg[1] == 1:
             self.FOV_distance[4] = msg[2]
+            self.FOV_object_check[4] = 1
         else:
             self.FOV_distance[4] = self.default_distance
+            self.FOV_object_check[4] = 0
             
     def _distance_cb_6(self, msg):
         if msg[1] == 1:
             self.FOV_distance[5] = msg[2]
+            self.FOV_object_check[5] = 1
         else:
             self.FOV_distance[5] = self.default_distance
+            self.FOV_object_check[5] = 0
             
     def _distance_cb_7(self, msg):
         if msg[1] == 1:
             self.FOV_distance[6] = msg[2]
+            self.FOV_object_check[6] = 1
         else:
             self.FOV_distance[6] = self.default_distance
+            self.FOV_object_check[6] = 0
             
     def _distance_cb_8(self, msg):
         if msg[1] == 1:
             self.FOV_distance[7] = msg[2]
+            self.FOV_object_check[7] = 1
         else:
             self.FOV_distance[7] = self.default_distance
+            self.FOV_object_check[7] = 0
             
     def _distance_cb_9(self, msg):
         if msg[1] == 1:
             self.FOV_distance[8] = msg[2]
+            self.FOV_object_check[8] = 1
         else:
             self.FOV_distance[8] = self.default_distance
+            self.FOV_object_check[8] = 0
             
     def _distance_cb_10(self, msg):
         if msg[1] == 1:
             self.FOV_distance[9] = msg[2]
+            self.FOV_object_check[9] = 1
         else:
             self.FOV_distance[9] = self.default_distance
+            self.FOV_object_check[9] = 0
             
     def _distance_cb_11(self, msg):
         if msg[1] == 1:
             self.FOV_distance[10] = msg[2]
+            self.FOV_object_check[10] = 1
         else:
             self.FOV_distance[10] = self.default_distance
+            self.FOV_object_check[10] = 0
             
     def _distance_cb_12(self, msg):
         if msg[1] == 1:
             self.FOV_distance[11] = msg[2]
+            self.FOV_object_check[11] = 1
         else:
             self.FOV_distance[11] = self.default_distance
+            self.FOV_object_check[11] = 0
             
     def _distance_cb_13(self, msg):
         if msg[1] == 1:
             self.FOV_distance[12] = msg[2]
+            self.FOV_object_check[12] = 1
         else:
             self.FOV_distance[12] = self.default_distance
+            self.FOV_object_check[12] = 0
             
     def _distance_cb_14(self, msg):
         if msg[1] == 1:
             self.FOV_distance[13] = msg[2]
+            self.FOV_object_check[13] = 1
         else:
             self.FOV_distance[13] = self.default_distance
+            self.FOV_object_check[13] = 0
             
     def _distance_cb_15(self, msg):
         if msg[1] == 1:
             self.FOV_distance[14] = msg[2]
+            self.FOV_object_check[14] = 1
         else:
             self.FOV_distance[14] = self.default_distance
+            self.FOV_object_check[14] = 0
             
     def _distance_cb_16(self, msg):
         if msg[1] == 1:
             self.FOV_distance[15] = msg[2]
+            self.FOV_object_check[15] = 1
         else:
             self.FOV_distance[15] = self.default_distance
+            self.FOV_object_check[15] = 0
             
     def _distance_cb_17(self, msg):
         if msg[1] == 1:
             self.FOV_distance[16] = msg[2]
+            self.FOV_object_check[16] = 1
         else:
             self.FOV_distance[16] = self.default_distance
+            self.FOV_object_check[16] = 0
             
 
 class VrepInterface(object):
@@ -322,11 +357,11 @@ class VrepInterface(object):
         bundle_pos = self.FOV_distance_sensor.pos
 
         if self.flag == False:
-            self.output_temp = FOV_distance
+            # self.output_temp = FOV_distance
 
             # add data set
-            self.input_data.append(self.input_temp)
-            self.output_data.append(self.output_temp)
+            self.input_data = self.input_temp
+            self.output_data = self.output_temp
 
             # clear temp data
             self.input_temp = []
@@ -334,6 +369,7 @@ class VrepInterface(object):
 
         else:
             self.input_temp = self.input_temp + bundle_pos + [AVG_distance]
+            self.output_temp = FOV_distance + self.FOV_distance_sensor.FOV_object_check
 
         # change do_next_step state
         self.do_next_step = True
@@ -364,8 +400,8 @@ class VrepInterface(object):
     def set_object_position(self, obj_pos):
         self.Objects.excute_pose(obj_pos)
 
-def save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Make_data_set/data/3_place/situation_1' + name + '.csv'
+def _save_data_as_csv(data, name):
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Make_data_set/data/3_place_ver2/situation_2/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
 def make_fold(pd_data, fold_num):
@@ -392,22 +428,31 @@ def make_fold(pd_data, fold_num):
         exec(launch_1)
         exec(launch_2)
 
-    # print(Validation_input_Fold1.shape)
-    # print(Validation_verify_Fold1.shape)
-    # print(Validation_output_Fold1.shape)
+    print(input_Fold1.shape)
+    print(output_Fold1.shape)
+    # print(output_Fold1)
 
     print('fold data done')
 
     for i in range(0, fold_num):
 
-        launch_1 = 'save_data_as_csv(input_Fold%d, \'input_Fold_%d\')'%(i+1,i+1)
-        launch_2 = 'save_data_as_csv(output_Fold%d, \'output_Fold_%d\')'%(i+1,i+1)
+        launch_1 = '_save_data_as_csv(input_Fold%d, \'input_Fold_%d\')'%(i+1,i+1)
+        launch_2 = '_save_data_as_csv(output_Fold%d, \'output_Fold_%d\')'%(i+1,i+1)
         
         exec(launch_1)
         exec(launch_2)
 
         print(i+1)
 
+    print ('Save data done')
+
+def save_data(list_data, name, numbering):
+    pd_data = pd.DataFrame(list_data)
+    data = pd_data.T
+    
+    _save_data_as_csv(data, '%s%d'%(name,numbering))
+
+    print(numbering)
     print ('Save data done')
 
 def deg2rad(deg):
@@ -435,27 +480,73 @@ def make_path_set(resolution):
 def make_object_pos_set(resolution):
     # input unit (m), calculation unit (mm), output unit (m)
     resolution = int(resolution*1000)
-    wall_1_x_range = range(1000, 1600+1 ,resolution)
-    wall_1_y_range = range(-500, 200+1, resolution)
+
+### situation 1 ###
+    # wall_1_x_range = range(1000, 1600+1 ,resolution)
+    # wall_1_y_range = range(-500, 200+1, resolution)
+    # wall_1_z_range = [1000]
     
-    wall_3_y_range = range(0, 1000+1, resolution)
-    wall_3_z_range = range(0, 500+1, resolution)
+    # wall_3_y_range = range(0, 1000+1, resolution)
+    # wall_3_z_range = range(0, 500+1, resolution)
+
+    # obj_pos = []
+
+    # for wall_1_x in wall_1_x_range:
+    #     wall_3_x_range = range(900, wall_1_x-300+1, resolution)
+    #     for wall_1_y in wall_1_y_range:
+    #         for wall_1_z in wall_1_z_range:
+    #             for wall_3_x in wall_3_x_range:
+    #                 for wall_3_y in wall_3_y_range:
+    #                     for wall_3_z in wall_3_z_range:
+    #                         obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
+
+### situation 2 ###
+    wall_1_x_range = [1000]
+    wall_1_y_range = range(-800, 800+1, 200)
+    wall_1_z_range = [1000]
+    
+    wall_3_x_range = range(1000, 1500+1 ,250)
+    wall_3_y_range = range(-800, 800+1, 200)
+    wall_3_z_range = range(250, 1000, 250)
 
     obj_pos = []
 
     for wall_1_x in wall_1_x_range:
-        wall_3_x_range = range(900, wall_1_x-300+1, resolution)
         for wall_1_y in wall_1_y_range:
-            for wall_3_x in wall_3_x_range:
-                for wall_3_y in wall_3_y_range:
-                    for wall_3_z in wall_3_z_range:
-                        obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
+            for wall_1_z in wall_1_z_range:
+                for wall_3_x in wall_3_x_range:
+                    for wall_3_y in wall_3_y_range:
+                        for wall_3_z in wall_3_z_range:
+                            obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
 
+### situation 3 ###
+    # wall_1_x_range = range(1000, 1500+1, 100)
+    # wall_1_y_range = range(-800, 800+1, 200)
+    # wall_1_z_range = [400]
+    
+    # wall_3_x_range = [1500]
+    # wall_3_y_range = range(-800, 800+1, 200)
+    # wall_3_z_range = [1000]
+
+    # obj_pos = []
+
+    # for wall_1_x in wall_1_x_range:
+    #     for wall_1_y in wall_1_y_range:
+    #         for wall_1_z in wall_1_z_range:
+    #             for wall_3_x in wall_3_x_range:
+    #                 for wall_3_y in wall_3_y_range:
+    #                     for wall_3_z in wall_3_z_range:
+    #                         obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
+
+### return ###
     return obj_pos
 
-if __name__ == '__main__':
 
-    angle_path = make_path_set(20)
+if __name__ == '__main__':
+    input_data = []
+    output_data = []
+
+    angle_path = make_path_set(30)
     obj_poses = make_object_pos_set(0.20)
 
     print(len(angle_path), len(obj_poses))
@@ -465,10 +556,12 @@ if __name__ == '__main__':
     vrep.start_simulation()
 
     count = 0
-    count2 = 0
 
     for obj_pos in obj_poses:
         for start_angle, end_angle in angle_path:
+
+            count += 1
+            print(count)
 
             vrep.set_object_position(obj_pos)
             vrep.set_trajectory(start_angle, end_angle)
@@ -476,15 +569,26 @@ if __name__ == '__main__':
             while vrep.flag:
                 vrep.step_simulation()
 
-            count += 1
-            print(count)
-        
+            # input_temp = vrep.input_data
+            # output_temp = vrep.output_data
+
+            # print(vrep.input_data)
+            # print(len(vrep.output_data))
+
+            input_data += vrep.input_data
+            output_data += vrep.output_data
+
     vrep.stop_simulation()
 
-    input_data = vrep.input_data
-    output_data = vrep.output_data
+    input_np_data = np.array(input_data).reshape(168,-1)
+    output_np_data = np.array(output_data).reshape(34,-1)
 
-    Total_data = np.concatenate([input_data, output_data], axis=1)
-    pd_Total = pd.DataFrame(Total_data)
+    print(input_np_data.shape)
+    print(output_np_data.shape)
 
-    make_fold(pd_Total,20)
+    Total_data = np.concatenate([input_np_data, output_np_data], axis=0)
+    pd_Total = pd.DataFrame(Total_data).T
+
+    print(pd_Total.shape)
+
+    make_fold(pd_Total,4)
