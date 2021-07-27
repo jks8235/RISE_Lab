@@ -31,6 +31,8 @@ while ser.is_open:
         del data_uni_split[-1]
 
         data_list = [int(x) for x in data_uni_split]
+
+        print(data_list)
         
         sensor_ros_msg.data = data_list
         Sensor_data_publisher.publish(sensor_ros_msg)

@@ -1,39 +1,45 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
-"""
-This example shows how sending a single message works.
-"""
+import serial
+import rospy
+from rospy.client import init_node
 
-from __future__ import print_function
+from std_msgs.msg import Int16MultiArray
+from std_msgs.msg import Float32MultiArray
 
-import can
+rospy.init_node('4ch_sensor', anonymous=True)
 
-# this uses the default configuration (for example from the config file)
-    # see https://python-can.readthedocs.io/en/stable/configuration.html
+sensor_ros_msg = Float32MultiArray()
 
-    # Using specific buses works similar:
-    # bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=250000)
-    # bus = can.interface.Bus(bustype='pcan', channel='PCAN_USBBUS1', bitrate=250000)
-    # bus = can.interface.Bus(bustype='ixxat', channel=0, bitrate=250000)
-    # bus = can.interface.Bus(bustype='vector', app_name='CANalyzer', channel=0, bitrate=250000)
-    # ...
+Sensor_data_publisher = rospy.Publisher('4ch_sensor',
+                                        Float32MultiArray,
+                                        queue_size=2)
 
-bus = can.interface.Bus(bustype='ixxat', channel=0, bitrate=1000000)
+ser = serial.Serial(
+    port='/dev/ttyS5',
+    baudrate=9600,
+    timeout=1
+)# open serial port
+print(ser.name) # check which port was really used
 
-def read_one():
-    pass
+while ser.is_open:
+    if ser.readable():
+        res = ser.readline()
+        data_uni = res
+        # data_uni = res.decode()[:len(res)-1]
+        data_uni_split = data_uni.split(',')
+        del data_uni_split[-1]
 
-def send_one():
-    msg = can.Message(arbitration_id=0xc0ffee,
-                      data=[0, 25, 0, 1, 3, 1, 4, 1],
-                      is_extended_id=True)
-
-    try:
-        bus.send(msg)
-        print("Message sent on {}".format(bus.channel_info))
-    except can.CanError:
-        print("Message NOT sent")
-
-if __name__ == '__main__':
-    send_one() 
+        data_8_HEX = [str(x) for x in data_uni_split]
+        distance_data = []
+        
+        if (len(data_8_HEX) == 8):
+            data_4_HEX = [data_8_HEX[0]+data_8_HEX[1], data_8_HEX[2]+data_8_HEX[3], data_8_HEX[4]+data_8_HEX[5], data_8_HEX[6]+data_8_HEX[7]]
+            data_4_int = [int(x, 16) for x in data_4_HEX]
+            
+            distance_data = [float(x)/100 for x in data_4_int]
+            print(distance_data)
+        
+        sensor_ros_msg.data = distance_data
+        Sensor_data_publisher.publish(sensor_ros_msg)
