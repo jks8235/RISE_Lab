@@ -401,7 +401,7 @@ class VrepInterface(object):
         self.Objects.excute_pose(obj_pos)
 
 def _save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Make_data_set/data/3_place_ver2/situation_2/' + name + '.csv'
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Make_data_set/data/3_place_ver2/situation_3/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
 def make_fold(pd_data, fold_num):
@@ -501,32 +501,13 @@ def make_object_pos_set(resolution):
     #                         obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
 
 ### situation 2 ###
-    wall_1_x_range = [1000]
-    wall_1_y_range = range(-800, 800+1, 200)
-    wall_1_z_range = [1000]
-    
-    wall_3_x_range = range(1000, 1500+1 ,250)
-    wall_3_y_range = range(-800, 800+1, 200)
-    wall_3_z_range = range(250, 1000, 250)
-
-    obj_pos = []
-
-    for wall_1_x in wall_1_x_range:
-        for wall_1_y in wall_1_y_range:
-            for wall_1_z in wall_1_z_range:
-                for wall_3_x in wall_3_x_range:
-                    for wall_3_y in wall_3_y_range:
-                        for wall_3_z in wall_3_z_range:
-                            obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
-
-### situation 3 ###
-    # wall_1_x_range = range(1000, 1500+1, 100)
+    # wall_1_x_range = [1000]
     # wall_1_y_range = range(-800, 800+1, 200)
-    # wall_1_z_range = [400]
+    # wall_1_z_range = [1000]
     
-    # wall_3_x_range = [1500]
+    # wall_3_x_range = range(1000, 1500+1 ,250)
     # wall_3_y_range = range(-800, 800+1, 200)
-    # wall_3_z_range = [1000]
+    # wall_3_z_range = range(250, 1000, 250)
 
     # obj_pos = []
 
@@ -537,6 +518,25 @@ def make_object_pos_set(resolution):
     #                 for wall_3_y in wall_3_y_range:
     #                     for wall_3_z in wall_3_z_range:
     #                         obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
+
+### situation 3 ###
+    wall_1_x_range = range(1000, 1500+1, 100)
+    wall_1_y_range = range(-800, 800+1, 200)
+    wall_1_z_range = [400]
+    
+    wall_3_x_range = [1500]
+    wall_3_y_range = range(-800, 800+1, 200)
+    wall_3_z_range = [1000]
+
+    obj_pos = []
+
+    for wall_1_x in wall_1_x_range:
+        for wall_1_y in wall_1_y_range:
+            for wall_1_z in wall_1_z_range:
+                for wall_3_x in wall_3_x_range:
+                    for wall_3_y in wall_3_y_range:
+                        for wall_3_z in wall_3_z_range:
+                            obj_pos += [[wall_1_x/1000.0, wall_1_y/1000.0, wall_1_z/1000.0, wall_3_x/1000.0, wall_3_y/1000.0, wall_3_z/1000.0]]
 
 ### return ###
     return obj_pos
@@ -552,43 +552,43 @@ if __name__ == '__main__':
     print(len(angle_path), len(obj_poses))
     print(len(angle_path)*len(obj_poses))
 
-    vrep = VrepInterface()
-    vrep.start_simulation()
+    # vrep = VrepInterface()
+    # vrep.start_simulation()
 
-    count = 0
+    # count = 0
 
-    for obj_pos in obj_poses:
-        for start_angle, end_angle in angle_path:
+    # for obj_pos in obj_poses:
+    #     for start_angle, end_angle in angle_path:
 
-            count += 1
-            print(count)
+    #         count += 1
+    #         print(count)
 
-            vrep.set_object_position(obj_pos)
-            vrep.set_trajectory(start_angle, end_angle)
+    #         vrep.set_object_position(obj_pos)
+    #         vrep.set_trajectory(start_angle, end_angle)
             
-            while vrep.flag:
-                vrep.step_simulation()
+    #         while vrep.flag:
+    #             vrep.step_simulation()
 
-            # input_temp = vrep.input_data
-            # output_temp = vrep.output_data
+    #         # input_temp = vrep.input_data
+    #         # output_temp = vrep.output_data
 
-            # print(vrep.input_data)
-            # print(len(vrep.output_data))
+    #         # print(vrep.input_data)
+    #         # print(len(vrep.output_data))
 
-            input_data += vrep.input_data
-            output_data += vrep.output_data
+    #         input_data += vrep.input_data
+    #         output_data += vrep.output_data
 
-    vrep.stop_simulation()
+    # vrep.stop_simulation()
 
-    input_np_data = np.array(input_data).reshape(168,-1)
-    output_np_data = np.array(output_data).reshape(34,-1)
+    # input_np_data = np.array(input_data).reshape(168,-1)
+    # output_np_data = np.array(output_data).reshape(34,-1)
 
-    print(input_np_data.shape)
-    print(output_np_data.shape)
+    # print(input_np_data.shape)
+    # print(output_np_data.shape)
 
-    Total_data = np.concatenate([input_np_data, output_np_data], axis=0)
-    pd_Total = pd.DataFrame(Total_data).T
+    # Total_data = np.concatenate([input_np_data, output_np_data], axis=0)
+    # pd_Total = pd.DataFrame(Total_data).T
 
-    print(pd_Total.shape)
+    # print(pd_Total.shape)
 
-    make_fold(pd_Total,4)
+    # make_fold(pd_Total,4)
