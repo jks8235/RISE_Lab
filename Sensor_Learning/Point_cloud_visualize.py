@@ -8,6 +8,7 @@ import struct
 import math
 import time
 import pandas as pd
+from scipy.spatial.transform import Rotation as R
 
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField
@@ -44,80 +45,52 @@ class PointCloud_Shape:
         time.sleep(0.5)
 
     def make_point(self):
-        path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/output_Fold_1.csv'
-        path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/matrix_Fold_1.csv'
-
-        points = np.array(pd.read_csv(path1, sep=",", header=None))
-        matrixes = np.array(pd.read_csv(path2, sep=",", header=None))
 
         sensor_num = 17
-        matrix_value_num = 12
-        world_points = []
 
-        # print(points.shape)
-        # print(matrixes.shape)
-
-        matrixes = matrixes.reshape(12,17,-1)
-
-        # print(points.shape[1])
-        # print(matrixes.shape)
-        # print(len(matrixes[:,0,0]))
-
-        for i in range(points.shape[1]):
-            for j in range(sensor_num):
-                point_list = [0, 0, points[j,i], 1]
-                matrix_list = [matrixes[:,j,i]]
-
-                point = np.array(point_list).reshape(4,1)
-                matrix = np.array(matrix_list).reshape(3,4)
-
-                world_point = np.dot(matrix,point)
-                world_point_list = [world_point[0,0], world_point[1,0], world_point[2,0]]
-                
-                world_points.append(world_point_list)
-
-        self.pcl_pub_xyz(world_points)
-
-    def make_point_chek(self):
         path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/output_Fold_1.csv'
-        path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/matrix_Fold_1.csv'
+        path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/pose_Fold_1.csv'
 
         points = np.array(pd.read_csv(path1, sep=",", header=None))
-        matrixes = np.array(pd.read_csv(path2, sep=",", header=None))
+        # points = points[:sensor_num,:]
+        pose = np.array(pd.read_csv(path2, sep=",", header=None))
 
-        sensor_num = 17
-        matrix_value_num = 12
-        world_points = []
+        print(points.shape)
+        print(pose.shape)
 
-        # print(points.shape)
-        # print(matrixes.shape)
+        sensor_to_point_cloud = []
 
-        matrixes = matrixes.reshape(12,17,-1)
+        for point_num in range(points.shape[1]):
+            for sensor in range(sensor_num):
 
-        # print(points.shape[1])
-        # print(matrixes.shape)
-        # print(len(matrixes[:,0,0]))
+                Full_quarternion = pose[sensor*7:(sensor+1)*7, point_num]
+                point = [0.0, 0.0, points[sensor, point_num]]
 
-        for i in range(points.shape[1]):
-            for j in range(sensor_num):
-                point_list = [0, 0, points[j,i]]
-                matrix_list = [matrixes[:,j,i]]
+                translation = Full_quarternion[:3]
+                quarternion = Full_quarternion[3:].tolist()
 
-                point = np.array(point_list).reshape(3,1)
-                tran_matrix = np.array(matrix_list).reshape(3,4)
+                print(type(translation))
+                print(translation)
 
-                rot_mat = tran_matrix[:, 0:3]
-                # print(rot_mat)
-                inv_rot_mat = rot_mat.T
-                trans_mat = tran_matrix[:, 3]
-                # print(trans_mat)
+                print(type(quarternion))
+                print(quarternion)
 
-                world_point = np.dot(inv_rot_mat,point) - tran_matrix
-                world_point_list = [world_point[0,0], world_point[1,0], world_point[2,0]]
-                
-                world_points.append(world_point_list)
+                rot_matrix = R.as_dcm(R.from_quat(quarternion))
 
-        self.pcl_pub_xyz(world_points)
+                # print(type(rot_matrix))
+                # print(rot_matrix)
+
+                # print(type(point))
+                # print(point)
+
+                world_point = (np.dot(rot_matrix, point) + translation).tolist()
+
+                print(type(world_point))
+                print(world_point)
+
+                sensor_to_point_cloud.append(world_point)
+
+        self.pcl_pub_xyz(sensor_to_point_cloud)
 
 ### Main Code ###
 if __name__ == '__main__':
@@ -128,7 +101,7 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
         try:
-            point_cloud_vrep.make_point_chek()
+            point_cloud_vrep.make_point()
 
         except rospy.ROSInterruptException:
             pass

@@ -96,7 +96,7 @@ class VrepDistanceSensorBridge(object):
         self.FOV_distance = [self.default_distance for i in range(len(self.sensor_names))]
         self.FOV_object_check = [0 for i in range(len(self.sensor_names))]
         self.pos = []
-        self.transformation_matrix = [0 for i in range(len(self.sensor_names))]
+        self.sensor_pose = [0 for i in range(len(self.sensor_names))]
 
         ## create vrep B0 subscriber function
         # Read proximitisensor
@@ -119,23 +119,23 @@ class VrepDistanceSensorBridge(object):
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[16]], self.client.simxCreateSubscriber(self._distance_cb_17, dropMessages=True))
 
         # get transformation
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[0]], -1, self.client.simxCreateSubscriber(self._matrix_cb_1, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[1]], -1, self.client.simxCreateSubscriber(self._matrix_cb_2, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[2]], -1, self.client.simxCreateSubscriber(self._matrix_cb_3, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[3]], -1, self.client.simxCreateSubscriber(self._matrix_cb_4, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[4]], -1, self.client.simxCreateSubscriber(self._matrix_cb_5, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[5]], -1, self.client.simxCreateSubscriber(self._matrix_cb_6, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[6]], -1, self.client.simxCreateSubscriber(self._matrix_cb_7, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[7]], -1, self.client.simxCreateSubscriber(self._matrix_cb_8, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[8]], -1, self.client.simxCreateSubscriber(self._matrix_cb_9, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[9]], -1, self.client.simxCreateSubscriber(self._matrix_cb_10, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[10]], -1, self.client.simxCreateSubscriber(self._matrix_cb_11, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[11]], -1, self.client.simxCreateSubscriber(self._matrix_cb_12, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[12]], -1, self.client.simxCreateSubscriber(self._matrix_cb_13, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[13]], -1, self.client.simxCreateSubscriber(self._matrix_cb_14, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[14]], -1, self.client.simxCreateSubscriber(self._matrix_cb_15, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[15]], -1, self.client.simxCreateSubscriber(self._matrix_cb_16, dropMessages=True))
-        self.client.simxGetObjectMatrix(self.obj_handles[self.sensor_names[16]], -1, self.client.simxCreateSubscriber(self._matrix_cb_17, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[0]], -1, self.client.simxCreateSubscriber(self._pose_1, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[1]], -1, self.client.simxCreateSubscriber(self._pose_2, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[2]], -1, self.client.simxCreateSubscriber(self._pose_3, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[3]], -1, self.client.simxCreateSubscriber(self._pose_4, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[4]], -1, self.client.simxCreateSubscriber(self._pose_5, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[5]], -1, self.client.simxCreateSubscriber(self._pose_6, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[6]], -1, self.client.simxCreateSubscriber(self._pose_7, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[7]], -1, self.client.simxCreateSubscriber(self._pose_8, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[8]], -1, self.client.simxCreateSubscriber(self._pose_9, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[9]], -1, self.client.simxCreateSubscriber(self._pose_10, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[10]], -1, self.client.simxCreateSubscriber(self._pose_11, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[11]], -1, self.client.simxCreateSubscriber(self._pose_12, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[12]], -1, self.client.simxCreateSubscriber(self._pose_13, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[13]], -1, self.client.simxCreateSubscriber(self._pose_14, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[14]], -1, self.client.simxCreateSubscriber(self._pose_15, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[15]], -1, self.client.simxCreateSubscriber(self._pose_16, dropMessages=True))
+        self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[16]], -1, self.client.simxCreateSubscriber(self._pose_17, dropMessages=True))
 
         # get pos
         self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[0]], -1, self.client.simxCreateSubscriber(self._pos_cb, dropMessages=True))
@@ -289,56 +289,56 @@ class VrepDistanceSensorBridge(object):
             self.FOV_object_check[16] = 0
 
 # Transformation matrix Call Back
-    def _matrix_cb_1(self, msg):
-        self.transformation_matrix[0] = msg[1]
+    def _pose_1(self, msg):
+        self.sensor_pose[0] = msg[1]
 
-    def _matrix_cb_2(self, msg):
-        self.transformation_matrix[1] = msg[1]
+    def _pose_2(self, msg):
+        self.sensor_pose[1] = msg[1]
 
-    def _matrix_cb_3(self, msg):
-        self.transformation_matrix[2] = msg[1]
+    def _pose_3(self, msg):
+        self.sensor_pose[2] = msg[1]
 
-    def _matrix_cb_4(self, msg):
-        self.transformation_matrix[3] = msg[1]
+    def _pose_4(self, msg):
+        self.sensor_pose[3] = msg[1]
 
-    def _matrix_cb_5(self, msg):
-        self.transformation_matrix[4] = msg[1]
+    def _pose_5(self, msg):
+        self.sensor_pose[4] = msg[1]
 
-    def _matrix_cb_6(self, msg):
-        self.transformation_matrix[5] = msg[1]
+    def _pose_6(self, msg):
+        self.sensor_pose[5] = msg[1]
             
-    def _matrix_cb_7(self, msg):
-        self.transformation_matrix[6] = msg[1]
+    def _pose_7(self, msg):
+        self.sensor_pose[6] = msg[1]
 
-    def _matrix_cb_8(self, msg):
-        self.transformation_matrix[7] = msg[1]
+    def _pose_8(self, msg):
+        self.sensor_pose[7] = msg[1]
 
-    def _matrix_cb_9(self, msg):
-        self.transformation_matrix[8] = msg[1]
+    def _pose_9(self, msg):
+        self.sensor_pose[8] = msg[1]
 
-    def _matrix_cb_10(self, msg):
-        self.transformation_matrix[9] = msg[1]
+    def _pose_10(self, msg):
+        self.sensor_pose[9] = msg[1]
 
-    def _matrix_cb_11(self, msg):
-        self.transformation_matrix[10] = msg[1]
+    def _pose_11(self, msg):
+        self.sensor_pose[10] = msg[1]
 
-    def _matrix_cb_12(self, msg):
-        self.transformation_matrix[11] = msg[1]
+    def _pose_12(self, msg):
+        self.sensor_pose[11] = msg[1]
 
-    def _matrix_cb_13(self, msg):
-        self.transformation_matrix[12] = msg[1]
+    def _pose_13(self, msg):
+        self.sensor_pose[12] = msg[1]
 
-    def _matrix_cb_14(self, msg):
-        self.transformation_matrix[13] = msg[1]
+    def _pose_14(self, msg):
+        self.sensor_pose[13] = msg[1]
 
-    def _matrix_cb_15(self, msg):
-        self.transformation_matrix[14] = msg[1]
+    def _pose_15(self, msg):
+        self.sensor_pose[14] = msg[1]
             
-    def _matrix_cb_16(self, msg):
-        self.transformation_matrix[15] = msg[1]
+    def _pose_16(self, msg):
+        self.sensor_pose[15] = msg[1]
 
-    def _matrix_cb_17(self, msg):
-        self.transformation_matrix[16] = msg[1]
+    def _pose_17(self, msg):
+        self.sensor_pose[16] = msg[1]
 
 class VrepInterface(object):
 
@@ -400,7 +400,7 @@ class VrepInterface(object):
         self.input_temp = []
         self.output_data = []
         self.flag = True
-        self.transforamtion_data = []
+        self.sensor_pose_data = []
 
     def get_object_handles(self):
         self.obj_handles = dict()
@@ -433,10 +433,12 @@ class VrepInterface(object):
 
             # add data set
             self.input_data = self.input_temp
-            self.transforamtion_data = self.FOV_distance_sensor.transformation_matrix
+            self.sensor_pose_data = sum(self.FOV_distance_sensor.sensor_pose, [])
             self.output_data = FOV_distance + self.FOV_distance_sensor.FOV_object_check
-
-
+            print(self.output_data)
+            
+            # print(self.FOV_distance_sensor.sensor_pose)
+            # print(self.sensor_pose_data)
 
             # clear temp data
             self.input_temp = []
@@ -473,59 +475,22 @@ class VrepInterface(object):
     def set_object_position(self, obj_pos):
         self.Objects.excute_pose(obj_pos)
 
-    # def pcl_pub_xyz(self,points):
-    #     header = Header()
-    #     header.stamp = rospy.Time.now()
-    #     header.frame_id = 'map'
-    #     pcl = point_cloud2.create_cloud_xyz32(header, points)
-    #     pointcloud_publisher = rospy.Publisher('test_pcl', PointCloud2, queue_size=10)
-    #     pointcloud_publisher.publish(pcl)
-    #     time.sleep(0.5)
-
-    # def make_point_cloud(self, sensor_data, transformation_matrix):
-    #     sensor_num = 17
-    #     matrix_value_num = 12
-    #     world_points = []
-
-    #     # print(points.shape)
-    #     # print(matrixes.shape)
-
-    #     matrixes = matrixes.reshape(12,17,-1)
-
-    #     # print(points.shape[1])
-    #     # print(matrixes.shape)
-    #     # print(len(matrixes[:,0,0]))
-
-    #     for i in range(points.shape[1]):
-    #         for j in range(sensor_num):
-    #             point_list = [0, 0, points[j,i], 1]
-    #             matrix_list = [matrixes[:,j,i]]
-
-    #             point = np.array(point_list).reshape(4,1)
-    #             matrix = np.array(matrix_list).reshape(3,4)
-
-    #             world_point = np.dot(matrix,point)
-    #             world_point_list = [world_point[0,0], world_point[1,0], world_point[2,0]]
-                
-    #             world_points.append(world_point_list)
-
-    #     self.pcl_pub_xyz(world_points)
-
-
 def _save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/' + name + '.csv'
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_1/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
 def make_fold(pd_data, fold_num):
 
     DataNo = pd_data.shape[0]
     input_FeatNo = 168
-    matrix_FeatNo = 204 + input_FeatNo
-    output_FeatNo = 34 + matrix_FeatNo
+    pose_FeatNo = 119 + input_FeatNo
+    output_FeatNo = 34 + pose_FeatNo
     FoldDataNo = int(DataNo/fold_num)
 
-    total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
-    total_data = total_data.T
+    total_data = pd_data
+
+    # total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
+    # total_data = total_data.T
     
     print(total_data.shape)
 
@@ -533,20 +498,19 @@ def make_fold(pd_data, fold_num):
     for i in range(fold_num):
         
         temp_input_Valid = total_data.iloc[:input_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
-        temp_matrix_Valid = total_data.iloc[input_FeatNo:matrix_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
-        temp_output_Valid = total_data.iloc[matrix_FeatNo:output_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
-        
+        temp_pose_Valid = total_data.iloc[input_FeatNo:pose_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
+        temp_output_Valid = total_data.iloc[pose_FeatNo:output_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
         
         launch_1 = 'input_Fold%d = temp_input_Valid'%(i+1)
-        launch_2 = 'matrix_Fold%d = temp_matrix_Valid'%(i+1)
-        launch_3 = 'output_Fold%d = temp_matrix_Valid'%(i+1)
+        launch_2 = 'pose_Fold%d = temp_pose_Valid'%(i+1)
+        launch_3 = 'output_Fold%d = temp_output_Valid'%(i+1)
 
         exec(launch_1)
         exec(launch_2)
         exec(launch_3)
 
     print(input_Fold1.shape)
-    print(matrix_Fold1.shape)
+    print(pose_Fold1.shape)
     print(output_Fold1.shape)
 
     print('fold data done')
@@ -554,7 +518,7 @@ def make_fold(pd_data, fold_num):
     for i in range(0, fold_num):
 
         launch_1 = '_save_data_as_csv(input_Fold%d, \'input_Fold_%d\')'%(i+1,i+1)
-        launch_2 = '_save_data_as_csv(matrix_Fold%d, \'matrix_Fold_%d\')'%(i+1,i+1)
+        launch_2 = '_save_data_as_csv(pose_Fold%d, \'pose_Fold_%d\')'%(i+1,i+1)
         launch_3 = '_save_data_as_csv(output_Fold%d, \'output_Fold_%d\')'%(i+1,i+1)
         
         exec(launch_1)
@@ -564,15 +528,6 @@ def make_fold(pd_data, fold_num):
         print(i+1)
 
     print ('Save data done')
-
-def save_data(list_data, name, numbering):
-    pd_data = pd.DataFrame(list_data)
-    data = pd_data.T
-    
-    _save_data_as_csv(data, '%s%d'%(name,numbering))
-
-    print(numbering)
-    # print ('Save data done')
 
 def deg2rad(deg):
     rad = deg*math.pi/180
@@ -598,10 +553,11 @@ def make_path_set(resolution):
 
 if __name__ == '__main__':
     input_data = []
-    matrix_data = []
+    pose_data = []
     output_data = []
 
-    angle_path = make_path_set(30)
+    angle_path = make_path_set(5)
+    data_num = len(angle_path)
 
     print(len(angle_path))
 
@@ -619,31 +575,25 @@ if __name__ == '__main__':
         while vrep.flag:
             vrep.step_simulation()
 
-        # input_temp = vrep.input_data
-        # output_temp = vrep.output_data
-
-        # print(vrep.input_data)
-        # print(len(vrep.output_data))
-
         input_data += vrep.input_data
-        matrix_data += vrep.transforamtion_data
+        pose_data += vrep.sensor_pose_data
         output_data += vrep.output_data
 
     vrep.stop_simulation()
 
-    print(len(matrix_data))
+    print(len(output_data))
 
-    input_np_data = np.array(input_data).reshape(168,-1)
-    matrix_np_data = np.array(matrix_data).reshape(204,-1)
-    output_np_data = np.array(output_data).reshape(34,-1)
+    input_np_data = np.reshape(input_data,(data_num,168))
+    pose_np_data = np.reshape(pose_data,(data_num,119))
+    output_np_data = np.reshape(output_data,(data_num,34))
 
     print(input_np_data.shape)
-    print(matrix_np_data.shape)
+    print(pose_np_data.shape)
     print(output_np_data.shape)
 
-    Total_data = np.concatenate([input_np_data, matrix_np_data, output_np_data], axis=0)
+    Total_data = np.concatenate([input_np_data, pose_np_data, output_np_data], axis=1)
     pd_Total = pd.DataFrame(Total_data).T
 
-    # print(pd_Total.shape)
+    print(pd_Total.shape)
 
-    make_fold(pd_Total,1)
+    make_fold(pd_Total,3)

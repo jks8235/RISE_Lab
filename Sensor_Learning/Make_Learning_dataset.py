@@ -410,8 +410,10 @@ def make_fold(pd_data, fold_num):
     output_FeatNo = 17 + input_FeatNo
     FoldDataNo = int(DataNo/fold_num)
 
-    total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
-    total_data = total_data.T
+    total_data = pd_data
+
+    # total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
+    # total_data = total_data.T
     
     print(total_data.shape)
 
@@ -522,8 +524,9 @@ if __name__ == '__main__':
     obj_poses = make_object_pos_set(0.2)
 
     print(len(angle_path), len(obj_poses))
-    print(len(angle_path)*len(obj_poses))
-
+    data_num = (len(angle_path)*len(obj_poses))
+    print(data_num)
+    
     vrep = VrepInterface()
     vrep.start_simulation()
 
@@ -541,24 +544,18 @@ if __name__ == '__main__':
             while vrep.flag:
                 vrep.step_simulation()
 
-            # input_temp = vrep.input_data
-            # output_temp = vrep.output_data
-
-            # print(vrep.input_data)
-            # print(len(vrep.output_data))
-
             input_data += vrep.input_data
             output_data += vrep.output_data
 
     vrep.stop_simulation()
 
-    input_np_data = np.array(input_data).reshape(168,-1)
-    output_np_data = np.array(output_data).reshape(34,-1)
+    input_np_data = np.reshape(input_data,(data_num,168))
+    output_np_data = np.reshape(output_data,(data_num,34))
 
     print(input_np_data.shape)
     print(output_np_data.shape)
 
-    Total_data = np.concatenate([input_np_data, output_np_data], axis=0)
+    Total_data = np.concatenate([input_np_data, output_np_data], axis=1)
     pd_Total = pd.DataFrame(Total_data).T
 
     print(pd_Total.shape)
