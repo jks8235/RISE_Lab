@@ -326,7 +326,6 @@ class VrepInterface(object):
         self.input_data =[]
         self.output_data = []
         self.input_temp = []
-        self.output_temp = []
         self.flag = True
 
     def get_object_handles(self):
@@ -360,15 +359,13 @@ class VrepInterface(object):
 
             # add data set
             self.input_data = self.input_temp
-            self.output_data = self.output_temp
+            self.output_data = FOV_distance + self.FOV_distance_sensor.FOV_object_check
 
             # clear temp data
             self.input_temp = []
-            self.output_temp = []
 
         else:
             self.input_temp = self.input_temp + bundle_pos + [AVG_distance]
-            self.output_temp = FOV_distance + self.FOV_distance_sensor.FOV_object_check
 
         # change do_next_step state
         self.do_next_step = True
@@ -400,14 +397,14 @@ class VrepInterface(object):
         self.Objects.excute_pose(obj_pos)
 
 def _save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Learning_situation_1' + name + '.csv'
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Learning_situation_2/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
 def make_fold(pd_data, fold_num):
 
-    DataNo = pd_data.shape[0]
+    DataNo = pd_data.shape[1]
     input_FeatNo = 168
-    output_FeatNo = 17 + input_FeatNo
+    output_FeatNo = 34 + input_FeatNo
     FoldDataNo = int(DataNo/fold_num)
 
     total_data = pd_data

@@ -476,12 +476,12 @@ class VrepInterface(object):
         self.Objects.excute_pose(obj_pos)
 
 def _save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_1/' + name + '.csv'
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_1/situation_4/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
 def make_fold(pd_data, fold_num):
 
-    DataNo = pd_data.shape[0]
+    DataNo = pd_data.shape[1]
     input_FeatNo = 168
     pose_FeatNo = 119 + input_FeatNo
     output_FeatNo = 34 + pose_FeatNo

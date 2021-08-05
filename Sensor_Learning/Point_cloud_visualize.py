@@ -43,18 +43,36 @@ class PointCloud_Shape:
         pointcloud_publisher = rospy.Publisher('test_pcl', PointCloud2, queue_size=10)
         pointcloud_publisher.publish(pcl)
         time.sleep(0.5)
+        print("Point Cloud published")
 
-    def make_point(self):
+    def make_point(self, mode='test', thresh_hold=0.5):
 
         sensor_num = 17
+        points = None
+        pose = None
 
-        path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/output_Fold_1.csv'
-        path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test_2/pose_Fold_1.csv'
+        if mode == 'test':
+            for i in range(3):
+                path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/situation_4/output_Fold_%d.csv'%(i+1)
+                path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/situation_4/pose_Fold_%d.csv'%(i+1)
+                temp_points = np.array(pd.read_csv(path1, sep=",", header=None))
+                temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
 
-        points = np.array(pd.read_csv(path1, sep=",", header=None))
-        # points = points[:sensor_num,:]
-        pose = np.array(pd.read_csv(path2, sep=",", header=None))
+                points = merge_data(points, temp_points, axis=1)
+                pose = merge_data(pose, temp_pose, axis=1)
 
+
+        elif mode == 'predict':
+            for i in range(3):
+                path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/situation_4/pose_Fold_%d.csv'%(i+1)
+                temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
+
+                pose = merge_data(pose, temp_pose, axis=1)
+
+            path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/resulte/predict_Fold_3_4.csv'
+            points = np.array(pd.read_csv(path1, sep=",", header=None))
+
+        print('Data Load Done')
         print(points.shape)
         print(pose.shape)
 
@@ -63,34 +81,37 @@ class PointCloud_Shape:
         for point_num in range(points.shape[1]):
             for sensor in range(sensor_num):
 
-                Full_quarternion = pose[sensor*7:(sensor+1)*7, point_num]
-                point = [0.0, 0.0, points[sensor, point_num]]
+                if points[sensor+17, point_num] > thresh_hold:
 
-                translation = Full_quarternion[:3]
-                quarternion = Full_quarternion[3:].tolist()
+                    Full_quarternion = pose[sensor*7:(sensor+1)*7, point_num]
+                    point = [0.0, 0.0, points[sensor, point_num]]
 
-                print(type(translation))
-                print(translation)
+                    translation = Full_quarternion[:3]
+                    quarternion = Full_quarternion[3:].tolist()
 
-                print(type(quarternion))
-                print(quarternion)
+                    rot_matrix = R.as_dcm(R.from_quat(quarternion))
 
-                rot_matrix = R.as_dcm(R.from_quat(quarternion))
+                    world_point = (np.dot(rot_matrix, point) + translation).tolist()
 
-                # print(type(rot_matrix))
-                # print(rot_matrix)
-
-                # print(type(point))
-                # print(point)
-
-                world_point = (np.dot(rot_matrix, point) + translation).tolist()
-
-                print(type(world_point))
-                print(world_point)
-
-                sensor_to_point_cloud.append(world_point)
+                    sensor_to_point_cloud.append(world_point)
 
         self.pcl_pub_xyz(sensor_to_point_cloud)
+
+
+def merge_data(total_data, add_data, axis=0):
+    total = total_data
+
+    if type(total)==type(None):
+        total = add_data
+#         print('merge ok')
+    else:
+        total = np.concatenate((total, add_data),axis)
+    
+    total = pd.DataFrame(total)
+    total = np.array(total)
+
+    return total
+
 
 ### Main Code ###
 if __name__ == '__main__':
@@ -101,7 +122,7 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
         try:
-            point_cloud_vrep.make_point()
+            point_cloud_vrep.make_point(mode='predict', thresh_hold=0.7)
 
         except rospy.ROSInterruptException:
             pass
