@@ -326,6 +326,7 @@ class VrepInterface(object):
         self.input_data =[]
         self.output_data = []
         self.input_temp = []
+        self.output_temp = []
         self.flag = True
 
     def get_object_handles(self):
@@ -359,13 +360,17 @@ class VrepInterface(object):
 
             # add data set
             self.input_data = self.input_temp
-            self.output_data = FOV_distance + self.FOV_distance_sensor.FOV_object_check
+            self.output_data = self.output_temp
+
+            self.make_data()
 
             # clear temp data
             self.input_temp = []
+            self.output_temp = []
 
         else:
             self.input_temp = self.input_temp + bundle_pos + [AVG_distance]
+            self.output_temp = self.output_temp + FOV_distance + self.FOV_distance_sensor.FOV_object_check
 
         # change do_next_step state
         self.do_next_step = True
@@ -396,9 +401,35 @@ class VrepInterface(object):
     def set_object_position(self, obj_pos):
         self.Objects.excute_pose(obj_pos)
 
+    def make_data(self):
+
+        print(len(self.input_data))
+        print(len(self.output_data))
+
+        step = 30
+        data_length = 21
+        input_step_length = 8
+        output_step_length = 34
+
+        self.learning_input = []
+        self.learning_output =[]
+
+        for i in range(step+1-20):
+            self.learning_input += self.input_data[i*input_step_length:(i+21)*input_step_length]
+            self.learning_output += self.output_data[(i+20)*output_step_length:(i+21)*output_step_length]
+
+        print(i)
+        print((i+21)*input_step_length)
+        print(len(self.learning_input))
+        print(len(self.learning_output))
+
 def _save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Learning_situation_2/' + name + '.csv'
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data_ver2/learning_1/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
+
+def _save_data_as_pickle(data, name):
+    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data_ver2/learning_1/' + name + '.csv'
+    data.to_pickle(path)
 
 def make_fold(pd_data, fold_num):
 
@@ -470,7 +501,7 @@ def make_object_pos_set(resolution):
     # input unit (m), calculation unit (mm), output unit (m)
     resolution = int(resolution*1000)
 
-### situation 1 ###
+    # situation
     Box_1_x_range = [-1100]
     Box_1_y_range = range(-1100, 0+1, resolution*2)
     Box_1_z_range = [400]
@@ -518,7 +549,7 @@ if __name__ == '__main__':
     output_data = []
 
     angle_path = make_path_set(45)
-    obj_poses = make_object_pos_set(0.2)
+    obj_poses = make_object_pos_set(0.5)
 
     print(len(angle_path), len(obj_poses))
     data_num = (len(angle_path)*len(obj_poses))
@@ -536,25 +567,30 @@ if __name__ == '__main__':
             print(count)
 
             vrep.set_object_position(obj_pos)
-            vrep.set_trajectory(start_angle, end_angle)
+            vrep.set_trajectory(start_angle, end_angle, step=30)
             
             while vrep.flag:
                 vrep.step_simulation()
 
+
+
             input_data += vrep.input_data
             output_data += vrep.output_data
 
+            break
+        break
+
     vrep.stop_simulation()
 
-    input_np_data = np.reshape(input_data,(data_num,168))
-    output_np_data = np.reshape(output_data,(data_num,34))
+    # input_np_data = np.reshape(input_data,(data_num,168))
+    # output_np_data = np.reshape(output_data,(data_num,34))
 
-    print(input_np_data.shape)
-    print(output_np_data.shape)
+    # print(input_np_data.shape)
+    # print(output_np_data.shape)
 
-    Total_data = np.concatenate([input_np_data, output_np_data], axis=1)
-    pd_Total = pd.DataFrame(Total_data).T
+    # Total_data = np.concatenate([input_np_data, output_np_data], axis=1)
+    # pd_Total = pd.DataFrame(Total_data).T
 
-    print(pd_Total.shape)
+    # print(pd_Total.shape)
 
-    make_fold(pd_Total,8)
+    # make_fold(pd_Total,8)
