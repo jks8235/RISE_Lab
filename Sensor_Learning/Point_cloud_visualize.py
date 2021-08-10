@@ -53,8 +53,8 @@ class PointCloud_Shape:
 
         if mode == 'test':
             for i in range(3):
-                path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/situation_4/output_Fold_%d.csv'%(i+1)
-                path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/situation_4/pose_Fold_%d.csv'%(i+1)
+                path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/ver1/test_4/output_Fold_%d.csv'%(i+1)
+                path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/ver1/test_4/pose_Fold_%d.csv'%(i+1)
                 temp_points = np.array(pd.read_csv(path1, sep=",", header=None))
                 temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
 
@@ -64,12 +64,12 @@ class PointCloud_Shape:
 
         elif mode == 'predict':
             for i in range(3):
-                path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/situation_4/pose_Fold_%d.csv'%(i+1)
+                path2 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/ver1/test_4/pose_Fold_%d.csv'%(i+1)
                 temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
 
                 pose = merge_data(pose, temp_pose, axis=1)
 
-            path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/Point_cloud_test/resulte/predict_Fold_3_4.csv'
+            path1 = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/ver1/result/predict_Fold_5_4.csv'
             points = np.array(pd.read_csv(path1, sep=",", header=None))
 
         print('Data Load Done')
