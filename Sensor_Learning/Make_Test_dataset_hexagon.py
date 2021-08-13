@@ -817,11 +817,11 @@ class VrepInterface(object):
             self.test_pose += [sum(temp_pose, [])]
 
 def save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/hexagon/test_2/' + name + '.csv'
+    path = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_3/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
 def save_data_as_pickle(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/hexagon/test_2/' + name + '.pkl'
+    path = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_3/' + name + '.pkl'
     data.to_pickle(path)
 
 def deg2rad(deg):
