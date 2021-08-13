@@ -94,6 +94,7 @@ class VrepDistanceSensorBridge(object):
         self.sensor_pos_2 = []
 
         # create vrep B0 subscriber function
+        # Read proximitisensor
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[0]], self.client.simxCreateSubscriber(self._proxi_sensor_1_cb_1, dropMessages=True))
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[1]], self.client.simxCreateSubscriber(self._proxi_sensor_1_cb_2, dropMessages=True))
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[2]], self.client.simxCreateSubscriber(self._proxi_sensor_1_cb_3, dropMessages=True))
@@ -591,15 +592,13 @@ class VrepInterface(object):
         AVG_distance_1, AVG_distance_2 = self.FOV_distance_sensor.get_distance()
 
         if self.flag == False:
-            # self.output_temp = FOV_distance
-            if self.pose_error == False:
+        
+            # add data set
+            self.input_data = self.input_temp
+            self.output_data = self.output_temp
+            self.extra_data = self.extra_temp
 
-                # add data set
-                self.input_data = self.input_temp
-                self.output_data = self.output_temp
-                self.extra_data = self.extra_temp
-
-                self.make_data()
+            self.make_data()
 
             # clear temp data
             self.input_temp = []
@@ -607,12 +606,10 @@ class VrepInterface(object):
             self.extra_data = []
 
         else:
-            if bundle_pos_1[2] < 0:
-                self.pose_error = True
-            else:
-                self.input_temp = self.input_temp + [bundle_pos_1 + [AVG_distance_1] + bundle_pos_2 + [AVG_distance_2]]
-                self.output_temp = self.output_temp + [FOV_distance_1 + object_check_1 + FOV_distance_2 + object_check_2]
-                self.extra_temp = self.output_temp + [FOV_distance_1 + object_check_1 + FOV_distance_2 + object_check_2]
+            self.input_temp = self.input_temp + [bundle_pos_1 + [AVG_distance_1] + bundle_pos_2 + [AVG_distance_2]]
+            self.output_temp = self.output_temp + [FOV_distance_1 + object_check_1 + FOV_distance_2 + object_check_2]
+            self.extra_temp = self.output_temp + [FOV_distance_1 + object_check_1 + FOV_distance_2 + object_check_2]
+        
         # change do_next_step state
         self.do_next_step = True
 
@@ -631,7 +628,7 @@ class VrepInterface(object):
         self.client.simxSynchronousTrigger()
 
     def set_trajectory(self, start_pose, end_pose, step=20):
-        self.pose_error = False
+
         self.trajectory = []
         step_pose = [((end_pose[i]-start_pose[i])/step) for i in range(6)]
 
@@ -765,54 +762,44 @@ if __name__ == '__main__':
     vrep = VrepInterface()
     vrep.start_simulation()
 
-    count = 1
+    count = 0
     save_count = 1
 
     for obj_pos in obj_poses:
         for start_angle, end_angle in angle_path:
 
             vrep.set_object_position(obj_pos)
-            print(obj_pos)
             vrep.set_trajectory(start_angle, end_angle, step=50)
             
             while vrep.flag:
                 vrep.step_simulation()
 
-            else:
-                input_data += copy.deepcopy(vrep.learning_input)
-                output_data += copy.deepcopy(vrep.learning_output)
-                extra_data += copy.deepcopy(vrep.learning_extra)
+            input_data += copy.deepcopy(vrep.learning_input)
+            output_data += copy.deepcopy(vrep.learning_output)
+            extra_data += copy.deepcopy(vrep.learning_extra)
 
-                print(len(vrep.learning_input))
-                # print(vrep.learning_input)
-                print(len(vrep.learning_output))
-                # print(vrep.learning_output)
-                print(len(vrep.learning_extra))
-                # print(vrep.learning_extra)
+            count += 1
+            print("%d/%d")%(count, data_num)
 
-                count += 1
-                print(count)
-                print("%d/%d")%(count, data_num)
+            if count%1000 == 0:
 
-                if count%1000 == 0:
+                input_np_data = pd.DataFrame(np.array(input_data))
+                output_np_data = pd.DataFrame(np.array(output_data))
+                extra_np_data = pd.DataFrame(np.array(extra_data))
 
-                    input_np_data = pd.DataFrame(np.array(input_data))
-                    output_np_data = pd.DataFrame(np.array(output_data))
-                    extra_np_data = pd.DataFrame(np.array(extra_data))
+                save_data_as_pickle(input_np_data, 'input_Fold_%d'%(save_count))
+                save_data_as_pickle(output_np_data, 'output_Fold_%d'%(save_count))
+                save_data_as_pickle(extra_np_data, 'extra_Fold_%d'%(save_count))
 
-                    save_data_as_pickle(input_np_data, 'input_Fold_%d'%(save_count))
-                    save_data_as_pickle(output_np_data, 'output_Fold_%d'%(save_count))
-                    save_data_as_pickle(extra_np_data, 'extra_Fold_%d'%(save_count))
+                save_data_as_csv(input_np_data, 'input_Fold_%d'%(save_count))
+                save_data_as_csv(output_np_data, 'output_Fold_%d'%(save_count))
+                save_data_as_csv(extra_np_data, 'extra_Fold_%d'%(save_count))
 
-                    save_data_as_csv(input_np_data, 'input_Fold_%d'%(save_count))
-                    save_data_as_csv(output_np_data, 'output_Fold_%d'%(save_count))
-                    save_data_as_csv(extra_np_data, 'extra_Fold_%d'%(save_count))
+                input_data = []
+                output_data = []
+                extra_data = []
 
-                    input_data = []
-                    output_data = []
-                    extra_data = []
-
-                    save_count += 1
+                save_count += 1
 
     vrep.stop_simulation()
 
