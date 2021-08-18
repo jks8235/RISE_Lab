@@ -35,24 +35,28 @@ class PointCloud_Shape:
 
         if mode == 'test':
             for i in range(1):
-                path1 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_1/output_Fold_%d.csv'%(i+1)
-                path2 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_1/pose_Fold_%d.csv'%(i+1)
+                path1 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_3/output_Fold_%d.csv'%(i+1)
+                path2 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_3/pose_Fold_%d.csv'%(i+1)
                 temp_points = np.array(pd.read_csv(path1, sep=",", header=None))
                 temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
 
-                self.points = merge_data(self.points, temp_points, axis=1).T
-                self.pose = merge_data(self.pose, temp_pose, axis=1).T
+                self.points = merge_data(self.points, temp_points, axis=1)
+                self.pose = merge_data(self.pose, temp_pose, axis=1)
+
+            self.points = self.points.T
 
 
         elif mode == 'predict':
             for i in range(1):
-                path2 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_1/pose_Fold_%d.csv'%(i+1)
+                path2 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_3/pose_Fold_%d.csv'%(i+1)
                 temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
 
                 self.pose = merge_data(self.pose, temp_pose, axis=1)
 
-            path1 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/result/predict_Fold_1_1.csv'
-            self.points = np.array(pd.read_csv(path1, sep=",", header=None)).T
+            path1 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/result/predict_Fold_1_3.csv'
+            self.points = np.array(pd.read_csv(path1, sep=",", header=None))
+
+        self.pose = self.pose.T
 
         print('Data Load Done')
         print(self.points.shape)
@@ -67,34 +71,35 @@ class PointCloud_Shape:
             for sensor in range(sensor_num):
 
                 if self.points[sensor+sensor_num, point_num] > thresh_hold:
+                    if self.points[sensor, point_num] < 0.7:
 
-                    Full_quarternion_1 = self.pose[sensor*7:(sensor+1)*7, point_num]
-                    point_1 = [0.0, 0.0, self.points[sensor, point_num]]
+                        Full_quarternion_1 = self.pose[sensor*7:(sensor+1)*7, point_num]
+                        point_1 = [0.0, 0.0, self.points[sensor, point_num]]
 
-                    translation_1 = Full_quarternion_1[:3]
-                    quarternion_1 = Full_quarternion_1[3:].tolist()
+                        translation_1 = Full_quarternion_1[:3]
+                        quarternion_1 = Full_quarternion_1[3:].tolist()
 
-                    rot_matrix_1 = R.as_dcm(R.from_quat(quarternion_1))
+                        rot_matrix_1 = R.as_dcm(R.from_quat(quarternion_1))
 
-                    world_point_1 = (np.dot(rot_matrix_1, point_1) + translation_1).tolist()
+                        world_point_1 = (np.dot(rot_matrix_1, point_1) + translation_1).tolist()
 
-                    self.sensor_to_point_cloud.append(world_point_1)
+                        self.sensor_to_point_cloud.append(world_point_1)
 
-                sensor2 = sensor+19
+                # sensor2 = sensor+19
 
-                if self.points[sensor2+sensor_num, point_num] > thresh_hold:
+                # if self.points[sensor2+sensor_num, point_num] > thresh_hold:
 
-                    Full_quarternion_2 = self.pose[sensor2*7:(sensor2+1)*7, point_num]
-                    point_2 = [0.0, 0.0, self.points[sensor2, point_num]]
+                #     Full_quarternion_2 = self.pose[sensor2*7:(sensor2+1)*7, point_num]
+                #     point_2 = [0.0, 0.0, self.points[sensor2, point_num]]
 
-                    translation_2 = Full_quarternion_2[:3]
-                    quarternion_2 = Full_quarternion_2[3:].tolist()
+                #     translation_2 = Full_quarternion_2[:3]
+                #     quarternion_2 = Full_quarternion_2[3:].tolist()
 
-                    rot_matrix_2 = R.as_dcm(R.from_quat(quarternion_2))
+                #     rot_matrix_2 = R.as_dcm(R.from_quat(quarternion_2))
 
-                    world_point_2 = (np.dot(rot_matrix_2, point_2) + translation_2).tolist()
+                #     world_point_2 = (np.dot(rot_matrix_2, point_2) + translation_2).tolist()
 
-                    self.sensor_to_point_cloud.append(world_point_2)
+                #     self.sensor_to_point_cloud.append(world_point_2)
 
             print("Making", point_num, self.points.shape[1])
         
@@ -121,7 +126,7 @@ if __name__ == '__main__':
     print("start")
 
     point_cloud_vrep = PointCloud_Shape()
-    point_cloud_vrep.load_data(mode='test')
+    point_cloud_vrep.load_data(mode='predict')
     point_cloud_vrep.make_point(thresh_hold=0.7)
 
     while not rospy.is_shutdown():
