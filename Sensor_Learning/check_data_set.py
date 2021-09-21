@@ -70,36 +70,11 @@ class PointCloud_Shape:
         for point_num in range(self.points.shape[1]):
             for sensor in range(sensor_num):
 
-                if self.points[sensor+sensor_num, point_num] > thresh_hold:
-                    if self.points[sensor, point_num] < 0.7:
+                Full_quarternion_1 = self.pose[sensor*7:(sensor+1)*7, point_num]
 
-                        Full_quarternion_1 = self.pose[sensor*7:(sensor+1)*7, point_num]
-                        point_1 = [0.0, 0.0, self.points[sensor, point_num]]
+                translation_1 = Full_quarternion_1[:3]
 
-                        translation_1 = Full_quarternion_1[:3]
-                        quarternion_1 = Full_quarternion_1[3:].tolist()
-
-                        rot_matrix_1 = R.as_dcm(R.from_quat(quarternion_1))
-
-                        world_point_1 = (np.dot(rot_matrix_1, point_1) + translation_1).tolist()
-
-                        self.sensor_to_point_cloud.append(world_point_1)
-
-                # sensor2 = sensor+19
-
-                # if self.points[sensor2+sensor_num, point_num] > thresh_hold:
-
-                #     Full_quarternion_2 = self.pose[sensor2*7:(sensor2+1)*7, point_num]
-                #     point_2 = [0.0, 0.0, self.points[sensor2, point_num]]
-
-                #     translation_2 = Full_quarternion_2[:3]
-                #     quarternion_2 = Full_quarternion_2[3:].tolist()
-
-                #     rot_matrix_2 = R.as_dcm(R.from_quat(quarternion_2))
-
-                #     world_point_2 = (np.dot(rot_matrix_2, point_2) + translation_2).tolist()
-
-                #     self.sensor_to_point_cloud.append(world_point_2)
+                self.sensor_to_point_cloud.append(translation_1)
 
             print("Making", point_num, self.points.shape[1])
         

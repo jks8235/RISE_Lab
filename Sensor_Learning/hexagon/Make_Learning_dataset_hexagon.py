@@ -11,77 +11,55 @@ import pandas as pd
 import math
 import copy
 import random
-from scipy.spatial.transform import Rotation as R
 
 sys.path.insert(0 , '/home/jee/work_space/catkin_wk/src/RISE_Lab/Library/')
 from CoppeliaSim_bluezero import b0RemoteApi
 
 
-class VrepMountStateBridge(object):
-    def __init__(self, client, obj_handles, mount_names):
+class VrepRobotStateBridge(object):
+    def __init__(self, client, obj_handles, joint_names):
         self.client = client
         self.obj_handles = obj_handles
-        self.mount_name = mount_names
+        self.joint_names = joint_names
+
+        self.joint_position = [0.0 for i in range(6)]
+
+        self.client.simxGetJointPosition(self.obj_handles[self.joint_names[0]], self.client.simxCreateSubscriber(self._joint1_cb, dropMessages=True))
+        self.client.simxGetJointPosition(self.obj_handles[self.joint_names[1]], self.client.simxCreateSubscriber(self._joint2_cb, dropMessages=True))
+        self.client.simxGetJointPosition(self.obj_handles[self.joint_names[2]], self.client.simxCreateSubscriber(self._joint3_cb, dropMessages=True))
+        self.client.simxGetJointPosition(self.obj_handles[self.joint_names[3]], self.client.simxCreateSubscriber(self._joint4_cb, dropMessages=True))
+        self.client.simxGetJointPosition(self.obj_handles[self.joint_names[4]], self.client.simxCreateSubscriber(self._joint5_cb, dropMessages=True))
+        self.client.simxGetJointPosition(self.obj_handles[self.joint_names[5]], self.client.simxCreateSubscriber(self._joint6_cb, dropMessages=True))
 
         # create pub topics
-        self.mount_state_pub_topics = dict()
-        for name in mount_names:
-            self.mount_state_pub_topics[name] = self.client.simxCreatePublisher(True)
+        self.joint_state_pub_topics = dict()
+        for name in joint_names:
+            self.joint_state_pub_topics[name] = self.client.simxCreatePublisher(True)
 
     def excute_pose(self, pose):
+        bundle = zip(self.joint_names, pose)
+        for name, desired_position in bundle:
+            self.client.simxSetJointTargetPosition(self.obj_handles[name], desired_position, self.joint_state_pub_topics[name])
 
-        self.client.simxSetObjectPose(self.obj_handles[self.mount_name[0]], -1, pose, self.mount_state_pub_topics[self.mount_name[0]])
+## Call Back functions
+    # Joint Postion Call Back
+    def _joint1_cb(self, msg):
+        self.joint_position[0] = msg[1]
 
-def joint_to_pose(joint_pose):
+    def _joint2_cb(self, msg):
+        self.joint_position[1] = msg[1]
 
-    L1_1 = 0.2
-    L1_2 = 0.2
-    L2   = 0.4
-    L3_1 = 0.2
-    L3_2 = 0.3
-    L4_1 = 0.15
-    L4_2 = 0.2
-    L5_1 = 0.2
-    L5_2 = 0.2
-    L6   = 0.1
+    def _joint3_cb(self, msg):
+        self.joint_position[2] = msg[1]
 
-    Tran_mat_1_1 = DH_to_TransMatrix(joint_pose[0], L1_1, L1_2, 0.0)
-    Tran_mat_1_2 = DH_to_TransMatrix(deg2rad(-90), 0.0, 0.0, deg2rad(-90))
-    Tran_mat_2   = DH_to_TransMatrix(joint_pose[1]-deg2rad(90), 0.0, L2, deg2rad(180))
-    Tran_mat_3_1 = DH_to_TransMatrix(joint_pose[2], L3_1, L3_2, 0.0)
-    Tran_mat_3_2 = DH_to_TransMatrix(deg2rad(-90), 0.0, 0.0, deg2rad(-90))
-    Tran_mat_4_1 = DH_to_TransMatrix(joint_pose[3], L4_1, L4_2, 0.0)
-    Tran_mat_4_2 = DH_to_TransMatrix(deg2rad(-90), 0.0, 0.0, deg2rad(-90))
-    Tran_mat_5_1 = DH_to_TransMatrix(joint_pose[4], L5_1, L5_2, 0.0)
-    Tran_mat_5_2 = DH_to_TransMatrix(deg2rad(90), 0.0, 0.0, deg2rad(90))
-    Tran_mat_6   = DH_to_TransMatrix(joint_pose[5], L6, 0.0, 0.0)
+    def _joint4_cb(self, msg):
+        self.joint_position[3] = msg[1]
 
-    Tran_mat_list = [Tran_mat_1_1, Tran_mat_1_2, Tran_mat_2, Tran_mat_3_1, Tran_mat_3_2, Tran_mat_4_1, Tran_mat_4_2, Tran_mat_5_1, Tran_mat_5_2, Tran_mat_6]
-    total_mat = np.array([[1.0, 0.0, 0.0, 0.0],
-                          [0.0, 1.0, 0.0, 0.0],
-                          [0.0, 0.0, 1.0, 0.0],
-                          [0.0, 0.0, 0.0, 1.0]])
+    def _joint5_cb(self, msg):
+        self.joint_position[4] = msg[1]
 
-    for mat in Tran_mat_list:
-        total_mat = np.dot(total_mat,mat)
-
-    rotation_mat = total_mat[:3,:3]
-
-    quarternion = R.as_quat(R.from_dcm(rotation_mat)).tolist()
-
-    translation = [total_mat[0,3], total_mat[1,3], total_mat[2,3]]
-
-    pose = translation + quarternion
-
-    return pose
-
-def DH_to_TransMatrix(theta, d, a, alpha):
-    Trans_matrix = np.array([[math.cos(theta),-math.sin(theta)*math.cos(alpha),math.sin(theta)*math.sin(alpha) ,a*math.cos(theta)],
-                             [math.sin(theta),math.cos(theta)*math.cos(alpha) ,-math.cos(theta)*math.sin(alpha),a*math.sin(theta)],
-                             [0.0            ,math.sin(alpha)                 ,math.cos(alpha)                 ,d                ],
-                             [0.0            ,0.0                             ,0.0                             ,1.0              ]])
-
-    return Trans_matrix
+    def _joint6_cb(self, msg):
+        self.joint_position[5] = msg[1]
 
 class VrepObjectStateBridge(object):
     def __init__(self, client, obj_handles, object_names):
@@ -116,6 +94,7 @@ class VrepDistanceSensorBridge(object):
         self.sensor_pos_2 = []
 
         # create vrep B0 subscriber function
+        # Read proximitisensor
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[0]], self.client.simxCreateSubscriber(self._proxi_sensor_1_cb_1, dropMessages=True))
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[1]], self.client.simxCreateSubscriber(self._proxi_sensor_1_cb_2, dropMessages=True))
         self.client.simxReadProximitySensor(self.obj_handles[self.sensor_names[2]], self.client.simxCreateSubscriber(self._proxi_sensor_1_cb_3, dropMessages=True))
@@ -485,15 +464,20 @@ class VrepDistanceSensorBridge(object):
 
 class VrepInterface(object):
 
-## Object Names set
+    ## Object Names set
     BOX_OBJ_NAMES = [
         "Box1",
         "Box2",
         "Box3"
         ]
 
-    MOUNT_OBJ_NAMES = [
-        'Mount'
+    INDY_OBJ_NAMES = [
+        "joint0",
+        "joint1",
+        "joint2",
+        "joint3",
+        "joint4",
+        "joint5",
         ]
 
     SENSOR_OBJ_NAMES = [
@@ -537,9 +521,8 @@ class VrepInterface(object):
         "Proximity_sensor_Center#0",
         ]
 
-    OBJ_NAMES = BOX_OBJ_NAMES + MOUNT_OBJ_NAMES + SENSOR_OBJ_NAMES
+    OBJ_NAMES = BOX_OBJ_NAMES + INDY_OBJ_NAMES + SENSOR_OBJ_NAMES
 
-#
     def __init__(self):
         ### Vrep
         # vrep client variables
@@ -553,7 +536,7 @@ class VrepInterface(object):
         self.client.simxSynchronous(True)
 
         # vrep bridge define
-        self.mount = VrepMountStateBridge(self.client, self.obj_handles, self.MOUNT_OBJ_NAMES)
+        self.indy = VrepRobotStateBridge(self.client, self.obj_handles, self.INDY_OBJ_NAMES)
         self.FOV_distance_sensor = VrepDistanceSensorBridge(self.client, self.obj_handles, self.SENSOR_OBJ_NAMES)
         self.Objects = VrepObjectStateBridge(self.client, self.obj_handles, self.BOX_OBJ_NAMES)
 
@@ -563,48 +546,17 @@ class VrepInterface(object):
 
         ## data
         # defualt variables
-        # self.Total_Data = dict{'sensor_1_center':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_1_1':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_1_2':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_1_3':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_1_4':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_1_5':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_1_6':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_2_1':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_2_2':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_2_3':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_2_4':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_2_5':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_2_6':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_3_1':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_3_2':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_3_3':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_3_4':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_3_5':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_1_3_6':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_center':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_1_1':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_1_2':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_1_3':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_1_4':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_1_5':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_1_6':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_2_1':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_2_2':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_2_3':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_2_4':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_2_5':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_2_6':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_3_1':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_3_2':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_3_3':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_3_4':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_3_5':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]},
-        #                        'sensor_2_3_6':{'x':[], 'y':[], 'z':[], 'q_x':[], 'q_y':[], 'q_z':[], 'q_w':[], 'd':[], 'check_bit':[]}}
-        self.input_data =[]
+        self.input_data = []
         self.output_data = []
         self.input_temp = []
         self.output_temp = []
+        self.extra_data = []
+        self.extra_temp = []
+
+        self.learning_input = []
+        self.learning_output =[]
+        self.learning_extra = []
+
         self.flag = True
 
     def get_object_handles(self):
@@ -620,10 +572,10 @@ class VrepInterface(object):
         sim_time = msg[1][b'simulationTime']
 
         ### Write the working code ###
-        if (len(self.trajectory) == 0) or (self.pose_error == True):
+        if len(self.trajectory) == 0:
             self.flag = False
         else:
-            self.mount.excute_pose(self.trajectory[0])
+            self.indy.excute_pose(self.trajectory[0])
             del self.trajectory[0]
 
     def simulation_step_done_cb(self, msg):
@@ -640,23 +592,24 @@ class VrepInterface(object):
         AVG_distance_1, AVG_distance_2 = self.FOV_distance_sensor.get_distance()
 
         if self.flag == False:
-            # self.output_temp = FOV_distance
-            if self.pose_error == True:
-                pass
-            else:
-                # add data set
-                self.input_data = self.input_temp
-                self.output_data = self.output_temp
+        
+            # add data set
+            self.input_data = self.input_temp
+            self.output_data = self.output_temp
+            self.extra_data = self.extra_temp
 
-                self.make_data()
+            self.make_data()
 
-                # clear temp data
-                self.input_temp = []
-                self.output_temp = []
+            # clear temp data
+            self.input_temp = []
+            self.output_temp = []
+            self.extra_data = []
 
         else:
             self.input_temp = self.input_temp + [bundle_pos_1 + [AVG_distance_1] + bundle_pos_2 + [AVG_distance_2]]
             self.output_temp = self.output_temp + [FOV_distance_1 + object_check_1 + FOV_distance_2 + object_check_2]
+            self.extra_temp = self.output_temp + [FOV_distance_1 + object_check_1 + FOV_distance_2 + object_check_2]
+        
         # change do_next_step state
         self.do_next_step = True
 
@@ -675,20 +628,12 @@ class VrepInterface(object):
         self.client.simxSynchronousTrigger()
 
     def set_trajectory(self, start_pose, end_pose, step=20):
-        self.pose_error = False
+
         self.trajectory = []
-        joint_pose = []
         step_pose = [((end_pose[i]-start_pose[i])/step) for i in range(6)]
 
         for pos_num in range(step+1):
-            joint_pose.append([deg2rad(start_pose[i]+pos_num*step_pose[i]) for i in range(6)])
-        
-        for joint_pos in joint_pose:
-             self.trajectory.append(joint_to_pose(joint_pos))
-             
-             if joint_pos[2] < 0.0:
-                 self.pose_error = True
-                 break
+            self.trajectory.append([deg2rad(start_pose[i]+pos_num*step_pose[i]) for i in range(6)])
 
         self.flag = True
 
@@ -697,101 +642,59 @@ class VrepInterface(object):
 
     def make_data(self):
 
-        step = 30
-        data_step = 21
-
         self.learning_input = []
-        self.learning_output =[]
+        self.learning_output = []
+        self.learning_extra = []
+
+        step = 350
+        data_step = 21
 
         for i in range(len(self.input_data)-20):
             temp_input = self.input_data[i:(i+21)]
             temp_output = self.output_data[(i+20)]
+            temp_extra = self.extra_data[i:(i+21)]
 
             # print(temp_output)
 
             self.learning_input += [sum(temp_input, [])]
             self.learning_output += [temp_output]
+            self.learning_extra += [sum(temp_extra, [])]
 
-def _save_data_as_csv(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/hexagon/learning_1/' + name + '.csv'
+def save_data_as_csv(data, name):
+    path = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon/learning_2/' + name + '.csv'
     data.to_csv(path, sep=',', header=None, index=None)
 
-def _save_data_as_pickle(data, name):
-    path = '/home/jee/work_space/catkin_wk/src/RISE_Lab/Sensor_Learning/data/hexagon/learning_1/' + name + '.csv'
+def save_data_as_pickle(data, name):
+    path = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon/learning_2/' + name + '.pkl'
     data.to_pickle(path)
-
-def make_fold(pd_data, fold_num):
-
-    DataNo = pd_data.shape[1]
-    input_FeatNo = 336
-    output_FeatNo = 76 + input_FeatNo
-    FoldDataNo = int(DataNo/fold_num)
-
-    total_data = pd_data
-
-    # total_data = pd_data.iloc[np.random.permutation(pd_data.index)]
-    # total_data = total_data.T
-    
-    print(total_data.shape)
-
-    ## Validation Data set ##
-    for i in range(fold_num):
-        
-        temp_input_Valid = total_data.iloc[:input_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
-        temp_output_Valid = total_data.iloc[input_FeatNo:output_FeatNo, FoldDataNo*i : FoldDataNo*(i+1)]
-        
-        launch_1 = 'input_Fold%d = temp_input_Valid'%(i+1)
-        launch_2 = 'output_Fold%d = temp_output_Valid'%(i+1)
-
-        exec(launch_1)
-        exec(launch_2)
-
-    print(input_Fold1.shape)
-    print(output_Fold1.shape)
-    # print(output_Fold1)
-
-    print('fold data done')
-
-    for i in range(0, fold_num):
-
-        launch_1 = '_save_data_as_csv(input_Fold%d, \'input_Fold_%d\')'%(i+1,i+1)
-        launch_2 = '_save_data_as_csv(output_Fold%d, \'output_Fold_%d\')'%(i+1,i+1)
-        
-        exec(launch_1)
-        exec(launch_2)
-
-        print(i+1)
-
-    print ('Save data done')
 
 def deg2rad(deg):
     rad = deg*math.pi/180
     return rad
 
-def make_path_set(resolution):
-    theta_0_range = range(-175, 175+1 ,resolution)
-    theta_1_range = range(-175, 175+1 ,resolution)
-    theta_2_range = range(-175, 175+1, resolution)
-    theta_3_range = range(-175, 175+1 ,resolution)
-    theta_4_range = range(-175, 175+1 ,resolution)
-    theta_5_range = range(-215, 215+1 ,resolution)
+def make_path_set():
+
+    theta_0_range = range(-175, 175+1 ,350) # -175 ~ 175
+    # theta_1_range = range(-175, 175+1 ,resolution) # -175 ~ 175 
+    theta_2_range = range(-120, 120+1, 240) # -175 ~ 175
+    theta_3_range = range(-150, 150+1 ,150) # -175 ~ 175
+    theta_4_range = range(-120, 120+1 ,120) # -175 ~ 175
+    # theta_5_range = range(-215, 215+1 ,resolution) # -215 ~ 215
 
     start_point = []
     end_point = []
 
     for theta_0_start in theta_0_range:
         for theta_0_end in theta_0_range:
-            for theta_1_start in theta_1_range:
-                for theta_1_end in theta_1_range:
-                    for theta_2_start in theta_2_range:
-                        for theta_2_end in theta_2_range:
-                            for theta_3_start in theta_3_range:
-                                for theta_3_end in theta_3_range:
-                                    for theta_4_start in theta_4_range:
-                                        for theta_4_end in theta_4_range:
-                                                    
-                                            start_point += [[float(theta_0_start), float(theta_1_start), float(theta_2_start), float(theta_3_start), float(theta_4_start), 0.0]]
-                                            end_point += [[float(theta_0_end), float(theta_1_end), float(theta_2_end), float(theta_3_end), float(theta_4_end), 0.0]]
+            for theta_2_start in theta_2_range:
+                for theta_2_end in theta_2_range:
+                    for theta_3_start in theta_3_range:
+                        for theta_3_end in theta_3_range:
+                            for theta_4_start in theta_4_range:
+                                for theta_4_end in theta_4_range:
+                                            
+                                    start_point += [[float(theta_0_start), 0.0, float(theta_2_start), float(theta_3_start), float(theta_4_start), 0.0]]
+                                    end_point += [[float(theta_0_end), 0.0, float(theta_2_end), float(theta_3_end), float(theta_4_end), 0.0]]
 
     angle_path = zip(start_point, end_point)
 
@@ -802,24 +705,24 @@ def make_object_pos_set(resolution):
     resolution = int(resolution*1000)
 
     # situation
-    Box_1_x_range = [-1100]
+    Box_1_x_range = range(-1100, -800, resolution)
     Box_1_y_range = range(-1100, 0+1, resolution*2)
     Box_1_z_range = [400]
     
     Box_2_x_range = range(900, 1100+1, resolution)
-    Box_2_y_range = range(-800, 800+1, resolution*2)
+    Box_2_y_range = range(-800, 800+1, resolution*4)
     Box_2_z_range = [300]
 
-    Box_3_x_range = range(-1100, 1100+1, resolution*3)
-    Box_3_y_range = [1300]
+    Box_3_x_range = range(-1100, 1100+1, resolution*5)
+    Box_3_y_range = range(800, 1300, resolution)
     Box_3_z_range = [900]
 
-### Box poses set ###
+    ### Box poses set ###
     Box_1_poses = []
     for Box_1_x in Box_1_x_range:
         for Box_1_y in Box_1_y_range:
             for Box_1_z in Box_1_z_range:
-                Box_1_poses += [Box_1_x/1000.0, Box_1_y/1000.0, Box_1_z/1000.0]
+                Box_1_poses += [[Box_1_x/1000.0, Box_1_y/1000.0, Box_1_z/1000.0]]
 
     Box_2_poses = []
     for Box_2_x in Box_2_x_range:
@@ -833,23 +736,24 @@ def make_object_pos_set(resolution):
             for Box_3_z in Box_3_z_range:
                 Box_3_poses += [[Box_3_x/1000.0, Box_3_y/1000.0, Box_3_z/1000.0]]
 
-### Total Box poses ##
+    ### Total Box poses ##
     obj_pos = []
     for Box_1_pos in Box_1_poses:
         for Box_2_pos in Box_2_poses:
             for Box_3_pos in Box_3_poses:
                 obj_pos += [[Box_1_pos, Box_2_pos, Box_3_pos]]
 
-### return ###
+    ### return ###
     return obj_pos
 
 
 if __name__ == '__main__':
     input_data = []
     output_data = []
+    # extra_data = []
 
-    angle_path = make_path_set(150)
-    obj_poses = make_object_pos_set(0.4)
+    angle_path = make_path_set()
+    obj_poses = make_object_pos_set(0.25)
 
     print(len(angle_path), len(obj_poses))
     data_num = (len(angle_path)*len(obj_poses))
@@ -859,50 +763,58 @@ if __name__ == '__main__':
     vrep.start_simulation()
 
     count = 0
-    error_count = 0
+    save_count = 1
 
     for obj_pos in obj_poses:
         for start_angle, end_angle in angle_path:
 
             vrep.set_object_position(obj_pos)
-            vrep.set_trajectory(start_angle, end_angle, step=30)
+            vrep.set_trajectory(start_angle, end_angle, step=350)
             
             while vrep.flag:
                 vrep.step_simulation()
 
-            if vrep.pose_error == True:
-                error_count += 1
-                print("error", error_count)
-            else:
-                input_data += copy.deepcopy(vrep.learning_input)
-                output_data += copy.deepcopy(vrep.learning_output)
+            input_data += copy.deepcopy(vrep.learning_input)
+            output_data += copy.deepcopy(vrep.learning_output)
+            # extra_data += copy.deepcopy(vrep.learning_extra)
 
-                count += 1
-                print(count)
+            count += 1
+            print("%d/%d")%(count, data_num)
+
+            if count%1000 == 0:
+
+                input_np_data = pd.DataFrame(np.array(input_data))
+                output_np_data = pd.DataFrame(np.array(output_data))
+                # extra_np_data = pd.DataFrame(np.array(extra_data))
+
+                save_data_as_pickle(input_np_data, 'input_Fold_%d'%(save_count))
+                save_data_as_pickle(output_np_data, 'output_Fold_%d'%(save_count))
+                # save_data_as_pickle(extra_np_data, 'extra_Fold_%d'%(save_count))
+
+                # save_data_as_csv(input_np_data, 'input_Fold_%d'%(save_count))
+                # save_data_as_csv(output_np_data, 'output_Fold_%d'%(save_count))
+                # save_data_as_csv(extra_np_data, 'extra_Fold_%d'%(save_count))
+
+                input_data = []
+                output_data = []
+                # extra_data = []
+
+                save_count += 1
 
     vrep.stop_simulation()
 
-    # print(len(input_data))
-    # print(len(input_data[0]))
-    # print(input_data[0])
-
-    # print(len(output_data))
-    # print(len(output_data[0]))
-    # print(output_data[0])
-
-    input_np_data = np.array(input_data)
-    output_np_data = np.array(output_data)
-
-    # input_np_data = np.reshape(input_data,(data_num,168))
-    # output_np_data = np.reshape(output_data,(data_num,34))
+    input_np_data = pd.DataFrame(np.array(input_data))
+    output_np_data = pd.DataFrame(np.array(output_data))
+    # extra_np_data = pd.DataFrame(np.array(extra_data))
 
     print(input_np_data.shape)
     print(output_np_data.shape)
+    # print(extra_np_data.shape)
 
-    Total_data = np.concatenate([input_np_data, output_np_data], axis=1)
-    pd_Total = pd.DataFrame(Total_data).T
+    save_data_as_pickle(input_np_data, 'input_Fold_%d'%(save_count))
+    save_data_as_pickle(output_np_data, 'output_Fold_%d'%(save_count))
+    # save_data_as_pickle(extra_np_data, 'extra_Fold_%d'%(save_count))
 
-    print(pd_Total.shape)
-    print(pd_Total)
-
-    make_fold(pd_Total,10)
+    # save_data_as_csv(input_np_data, 'input_Fold_%d'%(save_count))
+    # save_data_as_csv(output_np_data, 'output_Fold_%d'%(save_count))
+    # save_data_as_csv(extra_np_data, 'extra_Fold_%d'%(save_count))
