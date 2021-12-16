@@ -80,6 +80,9 @@ class VrepDistanceSensorBridge(object):
 
         '''
         # Get mount Pose
+
+        print(self.sensor_names)
+
         self.client.simxGetObjectPose(self.obj_handles[self.sensor_names[0]], -1, self.client.simxCreateSubscriber(self._pos_cb, dropMessages=True))
 
         # Read proximitisensor
@@ -93,19 +96,24 @@ class VrepDistanceSensorBridge(object):
         y = float(point[1])
         z = float(point[2])
 
-        thresh_x = 0.005 # 센서 너비 range
-        thresh_y = 0.003 # 센서 높이 range
-        thresh_z = 0.01  # 센서 측정 거리
+        thresh_x = 0.05 # 센서 너비 range
+        thresh_y = 0.03 # 센서 높이 range
+        thresh_z = 0.1  # 센서 측정 거리
 
-        if (x/thresh_x)**2 + (y/thresh_y)**2 (z/thresh_z)**2 > 1:
+        # print(x, thresh_x, y, thresh_y, z, thresh_z)
+
+        # sensor_range_value = (x/thresh_x)**2 + (y/thresh_y)**2 + (z/thresh_z)**2
+
+        # print(sensor_range_value)
+        # print(x, y, z, (x/thresh_x)**2 + (y/thresh_y)**2 + (z/thresh_z)**2)
+
+        if  (x/thresh_x)**2 + (y/thresh_y)**2 + (z/thresh_z)**2 > 1.0:
             check_flag = True
 
         else:
             check_flag = False
 
         return check_flag
-
-
 
 ## Call Back
 # Pos Call Back
@@ -115,6 +123,7 @@ class VrepDistanceSensorBridge(object):
 # Proxi Sensor Call Back
     def _proxi_sensor_cb_1(self, msg):
         if msg[1] == 1:
+            self.collision_check[0] = 1
             if self._ellips_limit(msg[3]) == True:
                 self.collision_check[0] = 0
             else:
@@ -124,6 +133,7 @@ class VrepDistanceSensorBridge(object):
 
     def _proxi_sensor_cb_2(self, msg):
         if msg[1] == 1:
+            self.collision_check[1] = 1
             if self._ellips_limit(msg[3]) == True:
                 self.collision_check[1] = 0
             else:
@@ -133,6 +143,7 @@ class VrepDistanceSensorBridge(object):
 
     def _proxi_sensor_cb_3(self, msg):
         if msg[1] == 1:
+            self.collision_check[2] = 1
             if self._ellips_limit(msg[3]) == True:
                 self.collision_check[2] = 0
             else:
@@ -142,6 +153,7 @@ class VrepDistanceSensorBridge(object):
 
     def _proxi_sensor_cb_4(self, msg):
         if msg[1] == 1:
+            self.collision_check[3] = 1
             if self._ellips_limit(msg[3]) == True:
                 self.collision_check[3] = 0
             else:
@@ -154,7 +166,7 @@ class VrepTotalSensorBridge(object):
         self.sensor_mounts = [0 for i in range(17)]
 
         for i in range(17):
-            self.sensor_mounts[i] = VrepDistanceSensorBridge(client, obj_handles, sensor_mounts_names[0])
+            self.sensor_mounts[i] = VrepDistanceSensorBridge(client, obj_handles, sensor_mounts_names[i])
 
 class VrepInterface(object):
     def __init__(self):
@@ -298,7 +310,7 @@ if __name__ == '__main__':
     
     vrep = VrepInterface()
 
-    vrep.make_path_set(30)
+    vrep.make_path_set(20)
 
     data_num = len(vrep.trajectory)
     print(data_num)
@@ -312,7 +324,7 @@ if __name__ == '__main__':
         count += 1
         print("%d/%d")%(count, data_num)
 
-    np.save('/media/jee/FC12-B7D8/data_folder/Best_sensor_position/30_resol.npy',vrep.array_data)
+    np.save('/media/jee/FC12-B7D8/data_folder/Best_sensor_position/20_resol.npy',vrep.array_data)
   
     # np.save('3dsave.npy',vrep.array_data)
 

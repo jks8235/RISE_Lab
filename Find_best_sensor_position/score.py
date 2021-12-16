@@ -3,6 +3,9 @@
 # author: Dr.Kyungsub Jee (King of the RISE) 양아치
 
 import numpy as np
+from numpy.core.fromnumeric import shape
+from numpy.lib.polynomial import RankWarning
+from scipy.spatial import transform
 import rospy
 import struct
 import math
@@ -19,78 +22,80 @@ from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
 import geometry_msgs.msg
 from std_msgs.msg import Float32MultiArray
 
-
 class Score:
     def __init__(self, data):
-        self.br = tf.TransformBroadcaster()
-        self.header = Header()
-        self.pointcloud_publisher = rospy.Publisher('test/pcl', PointCloud2, queue_size=10)
-        
         self.sensor_pose_data = data[:,:,0:7]
         self.sensor_collision_data = data[:,:,7:11]
 
-        self.bundle_transformation_pub = rospy.Publisher(
-            'bundle_transformation_data',
-            Float32MultiArray,
-            queue_size=2
-        )
-
-        self.sensor_mounts = [0 for i in range(17)]
-
         self.sensor_tf = [
-            [0, -0.02, 0, 0.7071069478988647, 0, 0, 0.7071067094802856],
-            [0.02, 0, 0, 0.5, 0.5, 0.5, 0.5],
-            [0, 0.02, 0, 0, 0.7071068286895752, 0.7071068286895752, 0],
-            [-0.02, 0, 0, 0.5, -0.5, -0.5, 0.5]
+            [0, -0.021, 0, 0.7071069478988647, 0, 0, 0.7071067094802856],
+            [0.021, 0, 0, 0.5, 0.5, 0.5, 0.5],
+            [0, 0.021, 0, 0, 0.7071068286895752, 0.7071068286895752, 0],
+            [-0.021, 0, 0, 0.5, -0.5, -0.5, 0.5]
         ]
 
-    def get_point_cloud(self, points):
-        header = self.header
+    def collision_score(self, sensor_mount_number):
+        sensor_mount_collision_data = self.sensor_collision_data[:,sensor_mount_number,:]
+
+        sensor_1_collision_ratio = np.average(sensor_mount_collision_data[:,0])
+        sensor_2_collision_ratio = np.average(sensor_mount_collision_data[:,1])
+        sensor_3_collision_ratio = np.average(sensor_mount_collision_data[:,2])
+        sensor_4_collision_ratio = np.average(sensor_mount_collision_data[:,3])
+        total_ratio = np.average(sensor_mount_collision_data[:,0:4])
+
+        print("Mount_%d" %(sensor_mount_number+1))
+        print("Sensor_1 Collision : %f" %(sensor_1_collision_ratio))
+        print("Sensor_2 Collision : %f" %(sensor_2_collision_ratio))
+        print("Sensor_3 Collision : %f" %(sensor_3_collision_ratio))
+        print("Sensor_4 Collision : %f" %(sensor_4_collision_ratio))
+        print("total Collision : %f" %(total_ratio))
+
+    def detection_range_score(self, sensor_mount_number):
+        sensor_mount_pose_data = self.sensor_pose_data[:,sensor_mount_number,:]
+        sensor_mount_collision_data = self.sensor_collision_data[:,sensor_mount_number,:]
+
+        senor_model_points = self._make_sensor_model_pcl()
+        # print("sensor model done")
+
+        data_num = self.sensor_pose_data.shape[0]
+
+        # data_num = 2000
+
+        total_pcl_list = ['0' for i in range(data_num)]
+
+        for point_num in range(data_num):
+            if sensor_mount_collision_data[point_num,:].tolist() == [1.0, 1.0, 1.0, 1.0]:
+                pass
+            else:
+                sensor_mount_points = self._make_world_pcl(senor_model_points, sensor_mount_pose_data[point_num, :], sensor_mount_collision_data[point_num,:])
+                total_pcl_list[point_num] = sensor_mount_points
+            # print("%d/%d" %(point_num, data_num))
+
+        while '0' in total_pcl_list:
+            total_pcl_list.remove('0')
+
+        total_pcl_array = np.concatenate(total_pcl_list, axis=0)
+        # print(total_pcl_array.shape)
+        total_pcl_array = np.unique(total_pcl_array, axis=0)
+        print("Mount_%d" %(sensor_mount_number+1))
+        print("Sensor_Range_vexel_num : %d" %(total_pcl_array.shape[0]))
+
+        # self._pcl_pub_xyz(total_pcl)
+        # time.sleep(0.01)
+
+    def _pcl_pub_xyz(self,points):
+        header = Header()
         header.stamp = rospy.Time.now()
-        header.frame_id = "sensor"
+        header.frame_id = 'map'
+        pcl = point_cloud2.create_cloud_xyz32(header, points)
+        pointcloud_publisher = rospy.Publisher('test_pcl', PointCloud2, queue_size=10)
+        pointcloud_publisher.publish(pcl)
+        time.sleep(0.5)
 
-        fields = [PointField('x', 0, PointField.FLOAT32,1),
-                  PointField('y', 4, PointField.FLOAT32,1),
-                  PointField('z', 8, PointField.FLOAT32,1),
-                  PointField('intensity', 12, PointField.FLOAT32,1)]
-
-        pcl = point_cloud2.create_cloud(header, fields, points)
-        return pcl
-
-    def get_tf_point_cloud_data(self, full_quarternion_bundle, point_cloud_data):
-
-        pcl_transform = geometry_msgs.msg.TransformStamped()
-        sensor_to_point_cloud = []
-        
-        point_cloud = self.get_point_cloud(point_cloud_data)
-
-        pcl_transform.header = self.header
-        pcl_transform.header.stamp = rospy.Time.now()
-        pcl_transform.header.frame_id = "sensor_bundle"
-        pcl_transform.child_frame_id = "sensor"
-        pcl_transform.transform.translation.x = full_quarternion_bundle[0]
-        pcl_transform.transform.translation.y = full_quarternion_bundle[1]
-        pcl_transform.transform.translation.z = full_quarternion_bundle[2]
-        pcl_transform.transform.rotation.x = full_quarternion_bundle[3]
-        pcl_transform.transform.rotation.y = full_quarternion_bundle[4]
-        pcl_transform.transform.rotation.z = full_quarternion_bundle[5]
-        pcl_transform.transform.rotation.w = full_quarternion_bundle[6]
-        
-        '''
-        do_transform_cloud
-        @First param: point cloud data
-        @Second param: The Transform message to convert.
-        @Second param type: geometry_msgs.msg.TransformStamped
-        '''
-        cloud_out = do_transform_cloud(point_cloud, pcl_transform)
-        sensor_to_point_cloud.append(cloud_out)
-
-        return sensor_to_point_cloud
-
-    def make_sensor_point_cloud(self, resolution = 0.001):
-        thresh_x = 0.005 # 센서 너비 range
-        thresh_y = 0.003 # 센서 높이 range
-        thresh_z = 0.01  # 센서 측정 거리
+    def _make_sensor_model_pcl(self, resolution = 0.01):
+        thresh_x = 0.05 # 센서 너비 range
+        thresh_y = 0.03 # 센서 높이 range
+        thresh_z = 0.1  # 센서 측정 거리
 
         point = []
 
@@ -107,75 +112,75 @@ class Score:
 
         return point
 
-    def make_point(self, sensor_mount_number):
+    def _make_world_pcl(self, sensor_model_points, mount_tf, sensor_check):
 
-        ellipse_point_cloud = self.make_sensor_point_cloud()
+        total_points = []
 
-        pose = self.sensor_pose_data
-        sensor_point_cloud = []
-        total_point_cloud = []
+        for sensor in range(4):
+            if sensor_check[sensor] != 0.:
+                pass
+            else:
+                full_quart_S2M = self.sensor_tf[sensor]
+                full_quart_M2W = mount_tf
 
-        for point_num in range(self.sensor_pose_data.shape[0]):
-            for sensor in range(4):
-                
-                each_sensor_point_cloud = []
+                transform_matrix_S2M = self._full_quart_to_transform_matrix(full_quart_S2M)
+                transfrom_matrix_M2W = self._full_quart_to_transform_matrix(full_quart_M2W)
 
-                for point in range(len(ellipse_point_cloud)):
-                    if self.sensor_collision_data[point_num, sensor_mount_number, sensor] != 0.:
-                        print(self.sensor_collision_data[point_num, sensor_mount_number, sensor])
-                    intensity = 0.1
-                
-                    full_quarternion_sensor = self.sensor_tf[sensor]
-                    ellipse_point = ellipse_point_cloud[point]
+                transform_matrix_total = (np.dot(transfrom_matrix_M2W, transform_matrix_S2M))
 
-                    translation = full_quarternion_sensor[:3]
-                    quarternion = full_quarternion_sensor[3:]
+                rot_matrix_total = transform_matrix_total[0:3,0:3]
+                transl_matrix_total = transform_matrix_total[0:3, 3]
 
-                    rot_matrix = R.as_dcm(R.from_quat(quarternion))
+                points_array = np.array(sensor_model_points).T
 
-                    tf_ellipse_point = (np.dot(rot_matrix, ellipse_point) + translation).tolist()
-                    tf_ellipse_point.append(intensity)
+                transformed_points = np.around((np.dot(rot_matrix_total, points_array).T + transl_matrix_total),2).tolist()
+            
+                total_points += transformed_points
 
-                    each_sensor_point_cloud.append(tf_ellipse_point)
+        total_point_array = np.array(total_points)
 
-                sensor_point_cloud += each_sensor_point_cloud
+        # print(total_point_array.shape)
 
-            full_quarternion_bundle = self.sensor_pose_data[point_num, sensor_mount_number, :]
-            self.bundle_transformation_msg = Float32MultiArray()
-            self.bundle_transformation_msg.data = full_quarternion_bundle
-            self.bundle_transformation_pub.publish(self.bundle_transformation_msg)
+        return total_point_array
 
-            pcl = self.get_tf_point_cloud_data(full_quarternion_bundle, sensor_point_cloud)
+    def _full_quart_to_transform_matrix(self, full_quart):
+        translation = full_quart[:3]
+        quarternion = full_quart[3:]
 
-            if len(pcl) != 0:
-                transform_pc = copy.copy(pcl[0])
-                for pc in pcl[1:]:
-                    transform_pc.width += pc.width
-                    transform_pc.data += pc.data
-    
-            self.pointcloud_publisher.publish(transform_pc)
-            time.sleep(0.001)
+        rot_matrix = R.as_dcm(R.from_quat(quarternion))
+        transl_matrix = np.array([translation]).T
 
-            ("Making", point_num, self.sensor_pose_data.shape[0])
-        
-        print("Making Done")
+        transform_matrix = np.append(np.append(rot_matrix, transl_matrix, axis=1), np.array([[0., 0., 0., 1.]]), axis=0)
+
+        return transform_matrix
 
 if __name__ == '__main__':
 
-    rospy.init_node('make_point_cloud')
-    print("start")
+    data = np.load('/media/jee/FC12-B7D8/data_folder/Best_sensor_position/30_resol.npy')
 
-    data = np.load('/media/jee/FC12-B7D8/data_folder/Best_sensor_position/20_resol.npy')
+    score = Score(data)
 
-    point_cloud_vrep = Score(data)
+    score.detection_range_score(1)
 
-    count = 0
+    # for i in range(17):
+    #     score.collision_score(i)
+    #     print("")
 
-    while not rospy.is_shutdown():
-        try:
-            if count < 1:
-                count += 1 
-                point_cloud_vrep.make_point(0)
+    for i in range(17):
+        score.detection_range_score(i)
+        print("")
 
-        except rospy.ROSInterruptException:
-            pass
+    # rospy.init_node('make_point_cloud')
+
+    # score.detection_range_score(0)
+
+    # print("start")
+
+    # point_cloud_vrep = Score(data)
+
+    # while not rospy.is_shutdown():
+    #     try:
+    #         score.detection_range_score(0)
+
+    #     except rospy.ROSInterruptException:
+    #         pass
