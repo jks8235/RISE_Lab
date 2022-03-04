@@ -152,8 +152,8 @@ def load_data(mode='test'):
 
     elif mode == 'test':
         for i in range(1):
-            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/test_1/output_Fold_1.npy'
-            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/test_1/input_Fold_1.npy'
+            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/test_3/output_Fold_1.npy'
+            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/test_3/input_Fold_1.npy'
 
             temp_points = np.load(path1)
             temp_pose = np.load(path2)
@@ -163,6 +163,8 @@ def load_data(mode='test'):
 
             points = merge_data(points, temp_points, axis=1)
             pose = merge_data(pose, temp_pose, axis=1)
+
+            print(points.shape)
 
 
     print('Data Load Done')

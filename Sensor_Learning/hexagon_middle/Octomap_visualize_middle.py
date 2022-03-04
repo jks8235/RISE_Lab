@@ -131,7 +131,7 @@ class PointCloud_Shape:
 
                 data = self.points[point_num, sensor]
                 
-                if  0.7 >= data and data >= 0.02:
+                if  0.65 >= data and data >= 0.02:
                     intensity = 0.1
                 
                     full_quarternion_sensor = self.sensor_tf[sensor]
@@ -173,10 +173,10 @@ def load_data(mode='test'):
 
     if mode == 'test':
         for i in range(1):
-            # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/PAP_test_1/total_output.npy'
-            # path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/PAP_test_1/total_input.npy'
-            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/output_Fold_1.npy'
-            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/input_Fold_1.npy'
+            # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/PAP_test_1/output_Fold_1.npy'
+            # path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/PAP_test_1/pose_Fold_1.npy'
+            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_3/output_Fold_1.npy'
+            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_3/input_Fold_1.npy'
 
             temp_points = np.load(path1)
             temp_pose = np.load(path2)
@@ -191,10 +191,10 @@ def load_data(mode='test'):
 
     elif mode == 'predict':
         for i in range(1):
-            # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/result/predict_PAP_Fold_total_data.csv'
-            # path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/total_input.npy'
-            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/result/predict_Fold_1_total_data.csv'
-            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/input_Fold_1.npy'
+            # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/result/predict_Fold_PAP_test_1.csv'
+            # path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/PAP_test_1/pose_Fold_1.npy'
+            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/result/predict_Fold_test_2.csv'
+            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_2/input_Fold_1.npy'
 
             # temp_points = np.road(path1))
             temp_pose = np.load(path2)

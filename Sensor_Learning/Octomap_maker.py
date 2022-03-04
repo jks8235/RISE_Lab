@@ -38,7 +38,7 @@ class maker_array(object):
         print(len(total_points), total_points[0])
         print(np_total_points.shape)
 
-        np.save('/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/map/test_1_0.05_0.8.npy', np_total_points)
+        np.save('/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/map/test_3_sonar_0.03_0.8.npy', np_total_points)
         # np.save('/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/map/test_1_0.05_0.8.npy', np_total_points)
 
         # for maker in data.markers:

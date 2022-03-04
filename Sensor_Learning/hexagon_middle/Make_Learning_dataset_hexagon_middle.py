@@ -450,7 +450,7 @@ class VrepInterface(object):
             self.learning_output += [temp_output]
 
 def save_as_npy(data, name):
-    path = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_2/' + name + '.npy'
+    path = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_3/' + name + '.npy'
     np.save(path, data)
 
 def deg2rad(deg):
@@ -499,7 +499,7 @@ def make_object_pos_set(resolution):
     Box_2_z_range = [300]
 
     Box_3_x_range = range(-1100, 1100+1, resolution*5)
-    Box_3_y_range = range(800, 1300, resolution)
+    Box_3_y_range = range(800, 1300+1, resolution)
     Box_3_z_range = [900]
 
     ### Box poses set ###
@@ -543,8 +543,7 @@ if __name__ == '__main__':
     count = 0
     save_count = 1
 
-#---------------------------------------------------------
-    # # learning data
+# ----------------learning data----------------------------
 
     # angle_path = make_path_set()
     # obj_poses = make_object_pos_set(0.25)
@@ -578,8 +577,8 @@ if __name__ == '__main__':
     #     output_data = []
 
     #     save_count += 1
-#----------------------------------------------------------------------
-    # Test data
+
+# --------------------Test data----------------------------------
 
     angle_path = make_path_set()
     data_num = (len(angle_path))

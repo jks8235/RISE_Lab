@@ -588,14 +588,14 @@ if __name__ == "__main__":
                 sensor_3_output_np_data = np.array(sensor_3_output_data)
                 sensor_4_output_np_data = np.array(sensor_4_output_data)
 
-                # save_as_npy(sensor_1_input_np_data, 'sensor_1_input_Fold_%d'%(save_count))
-                # save_as_npy(sensor_2_input_np_data, 'sensor_2_input_Fold_%d'%(save_count))
-                # save_as_npy(sensor_3_input_np_data, 'sensor_3_input_Fold_%d'%(save_count))
-                # save_as_npy(sensor_4_input_np_data, 'sensor_4_input_Fold_%d'%(save_count))
-                # save_as_npy(sensor_1_output_np_data, 'sensor_1_output_Fold_%d'%(save_count))
-                # save_as_npy(sensor_2_output_np_data, 'sensor_2_output_Fold_%d'%(save_count))
-                # save_as_npy(sensor_3_output_np_data, 'sensor_3_output_Fold_%d'%(save_count))
-                # save_as_npy(sensor_4_output_np_data, 'sensor_4_output_Fold_%d'%(save_count))
+                save_as_npy(sensor_1_input_np_data, 'sensor_1_input_Fold_%d'%(save_count))
+                save_as_npy(sensor_2_input_np_data, 'sensor_2_input_Fold_%d'%(save_count))
+                save_as_npy(sensor_3_input_np_data, 'sensor_3_input_Fold_%d'%(save_count))
+                save_as_npy(sensor_4_input_np_data, 'sensor_4_input_Fold_%d'%(save_count))
+                save_as_npy(sensor_1_output_np_data, 'sensor_1_output_Fold_%d'%(save_count))
+                save_as_npy(sensor_2_output_np_data, 'sensor_2_output_Fold_%d'%(save_count))
+                save_as_npy(sensor_3_output_np_data, 'sensor_3_output_Fold_%d'%(save_count))
+                save_as_npy(sensor_4_output_np_data, 'sensor_4_output_Fold_%d'%(save_count))
 
                 sensor_1_input_data = []
                 sensor_2_input_data = []
@@ -611,14 +611,14 @@ if __name__ == "__main__":
 
                 vrep.moveit_flag = False
 
-                if save_count > 5:
+                if save_count > 6:
                     break
             #--------------------------------------------------------------------
 
         vrep.stop_simulation()
 
-        print(sensor_1_input_np_data.shape)
-        print(sensor_1_output_np_data.shape)
+        print(sensor_1_input_np_data.shape, sensor_2_input_np_data.shape, sensor_3_input_np_data.shape, sensor_4_input_np_data.shape)
+        print(sensor_1_output_np_data.shape, sensor_2_output_np_data.shape, sensor_3_output_np_data.shape, sensor_4_output_np_data.shape)
 
     except rospy.ROSInterruptException:
         pass

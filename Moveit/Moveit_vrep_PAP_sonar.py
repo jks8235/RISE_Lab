@@ -404,7 +404,7 @@ if __name__ == "__main__":
                 save_as_npy(sensor_3_output_np_data, 'sensor_3_output_Fold_%d'%(save_count))
                 save_as_npy(sensor_4_output_np_data, 'sensor_4_output_Fold_%d'%(save_count))
 
-                print(sensor_1_output_data)
+                print(sensor_1_input_np_data.shape, sensor_1_output_data.shape)
 
                 sensor_1_input_data = []
                 sensor_2_input_data = []
@@ -420,7 +420,7 @@ if __name__ == "__main__":
 
                 vrep.moveit_flag = False
 
-                if save_count > 5:
+                if save_count > 6:
                     break
             #--------------------------------------------------------------------
 

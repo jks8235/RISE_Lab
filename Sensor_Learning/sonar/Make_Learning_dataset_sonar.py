@@ -263,7 +263,7 @@ class VrepInterface(object):
             self.learning_output += [temp_output]
 
 def save_as_npy(data, name):
-    path = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/test_1/' + name + '.npy'
+    path = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/sonar/test_3/' + name + '.npy'
     np.save(path, data)
 
 def deg2rad(deg):
