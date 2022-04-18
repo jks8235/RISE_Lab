@@ -123,6 +123,7 @@ class PointCloud_Shape:
             for sensor in range(sensor_num):
 
                 data = self.points[sensor, point_num]
+                # print(data)
                 
                 if  0.75 >= data and data >= 0.01:
                     intensity = 0.1
@@ -140,7 +141,9 @@ class PointCloud_Shape:
 
                     point_cloud_data.append(world_point)
 
-            full_quarternion_bundle = self.pose[126:133, point_num]
+            # full_quarternion_bundle = self.pose[126:133, point_num]
+            full_quarternion_bundle = self.pose[:, point_num]
+            # print(len(full_quarternion_bundle))
             self.bundle_transformation_msg = Float32MultiArray()
             self.bundle_transformation_msg.data = full_quarternion_bundle
             self.bundle_transformation_pub.publish(self.bundle_transformation_msg)
@@ -156,7 +159,7 @@ class PointCloud_Shape:
             self.pointcloud_publisher.publish(transform_pc)
             time.sleep(0.001)
 
-            print("Making", point_num, self.points.shape[1])
+            # print("Making", point_num, self.points.shape[1])
         
         print("Making Done")
 
@@ -166,15 +169,13 @@ def load_data(mode='test'):
 
     if mode == 'test':
         for i in range(1):
-            path1 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_1/output_Fold_%d.csv'%(i+1)
-            path2 = '/home/jee/work_space/data_folder/Sensor_learning/data/hexagon/test_1/pose_Fold_%d.csv'%(i+1)
+            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_learning_ver3/result_data/testing_box_(30,30,30)/testing_box_(30,30,30).csv'
+            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_learning_ver3/result_data/testing_box_(30,30,30)/pose_Fold_1.npy'
             temp_points = np.array(pd.read_csv(path1, sep=",", header=None))
-            temp_pose = np.array(pd.read_csv(path2, sep=",", header=None))
+            temp_pose = np.load(path2)
 
             points = merge_data(points, temp_points, axis=1)
             pose = merge_data(pose, temp_pose, axis=1)
-
-        points = points.T
 
 
     elif mode == 'predict':

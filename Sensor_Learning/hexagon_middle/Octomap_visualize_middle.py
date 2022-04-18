@@ -229,7 +229,7 @@ if __name__ == '__main__':
     rospy.init_node('make_point_cloud')
     print("start")
 
-    points, pose = load_data(mode='predict')
+    points, pose = load_data(mode='test')
 
     point_cloud_vrep = PointCloud_Shape(points, pose)
 
