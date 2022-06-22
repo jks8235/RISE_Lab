@@ -128,11 +128,13 @@ class PointCloud_Shape:
             point_cloud_data = []
 
             for sensor in range(sensor_num):
-
-                data = self.points[point_num, sensor]
                 
-                if  0.65 >= data and data >= 0.02:
-                    intensity = 0.1
+                distance = self.pose[point_num, 167]
+                ratio = 0.0
+                data = ratio*self.points[point_num, sensor] + (1.0-ratio)*distance
+                
+                if  0.75 >= data and data >= 0.02:
+                    intensity = 0.0955
                 
                     full_quarternion_sensor = self.sensor_tf[sensor]
                     point = [0.0, 0.0, data]
@@ -175,8 +177,8 @@ def load_data(mode='test'):
         for i in range(1):
             # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/PAP_test_1/output_Fold_1.npy'
             # path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/PAP_test_1/pose_Fold_1.npy'
-            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_3/output_Fold_1.npy'
-            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_3/input_Fold_1.npy'
+            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/output_Fold_1.npy'
+            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/input_Fold_1.npy'
 
             temp_points = np.load(path1)
             temp_pose = np.load(path2)
@@ -193,8 +195,9 @@ def load_data(mode='test'):
         for i in range(1):
             # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/result/predict_Fold_PAP_test_1.csv'
             # path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/PAP_test_1/pose_Fold_1.npy'
-            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/result/predict_Fold_test_2.csv'
-            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_2/input_Fold_1.npy'
+            # path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/result/predict_Fold_1_conv_data.csv'
+            path1 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning_ver2/data/hexagon_middle/result/predict_Fold_test_1.csv'
+            path2 = '/media/jee/FC12-B7D8/data_folder/Sensor_Learning/data/hexagon_middle/test_1/input_Fold_1.npy'
 
             # temp_points = np.road(path1))
             temp_pose = np.load(path2)
@@ -229,7 +232,7 @@ if __name__ == '__main__':
     rospy.init_node('make_point_cloud')
     print("start")
 
-    points, pose = load_data(mode='test')
+    points, pose = load_data(mode='predict')
 
     point_cloud_vrep = PointCloud_Shape(points, pose)
 
